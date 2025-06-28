@@ -1,0 +1,14 @@
+{
+  "extends": "@adonisjs/tsconfig/tsconfig.app.json",
+  "compilerOptions": {
+    "types": [
+      "@adonisjs/core",
+      "@adonisjs/auth",
+      "@adonisjs/lucid",
+      "@adonisjs/redis",
+      "socket.io"
+    ],
+    "rootDir": "./",
+    "outDir": "./build"
+  }
+}
