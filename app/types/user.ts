@@ -2,7 +2,7 @@ export interface UpdateMineroDto {
   id: string
   fullName?: string
   email?: string
-  cascoId?: string
+  cascoId?: string | null
 }
 
 export interface UpdateSupervisorDto {

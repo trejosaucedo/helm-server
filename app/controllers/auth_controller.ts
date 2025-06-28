@@ -1,10 +1,13 @@
+// app/controllers/auth_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
 import {
   registerSupervisorValidator,
   loginValidator,
   registerMineroValidator,
+  changePasswordValidator,
 } from '#validators/auth'
 import { AuthService } from '#services/auth_service'
+import { TokenUtils } from '#utils/token_utils'
 import User from '#models/user'
 
 export default class AuthController {
@@ -25,7 +28,9 @@ export default class AuthController {
         data: result,
       })
     } catch (error) {
-      return response.status(400).json({
+      const status = error.message?.includes('ya está registrado') ? 409 : 400
+
+      return response.status(status).json({
         success: false,
         message: error.message || 'Error al registrar usuario',
         data: null,
@@ -44,7 +49,9 @@ export default class AuthController {
         data: result,
       })
     } catch (error) {
-      return response.status(400).json({
+      const status = error.message?.includes('ya está registrado') ? 409 : 400
+
+      return response.status(status).json({
         success: false,
         message: error.message || 'Error al registrar minero',
         data: null,
@@ -73,7 +80,7 @@ export default class AuthController {
 
   async logout({ request, response }: HttpContext) {
     try {
-      const token = this.extractToken(request)
+      const token = TokenUtils.extractFromRequest(request)
 
       if (!token) {
         return response.status(401).json({
@@ -109,9 +116,47 @@ export default class AuthController {
     }
   }
 
+  async logoutAll({ request, response }: HttpContext) {
+    try {
+      const token = TokenUtils.extractFromRequest(request)
+
+      if (!token) {
+        return response.status(401).json({
+          success: false,
+          message: 'Token requerido',
+          data: null,
+        })
+      }
+
+      const validation = await User.validateToken(token)
+
+      if (!validation) {
+        return response.status(401).json({
+          success: false,
+          message: 'Token inválido',
+          data: null,
+        })
+      }
+
+      await this.authService.logoutAll(validation.user)
+
+      return response.status(200).json({
+        success: true,
+        message: 'Todas las sesiones cerradas exitosamente',
+        data: null,
+      })
+    } catch (error) {
+      return response.status(500).json({
+        success: false,
+        message: 'Error al cerrar sesiones',
+        data: null,
+      })
+    }
+  }
+
   async me({ request, response }: HttpContext) {
     try {
-      const token = this.extractToken(request)
+      const token = TokenUtils.extractFromRequest(request)
 
       if (!token) {
         return response.status(401).json({
@@ -155,13 +200,42 @@ export default class AuthController {
     }
   }
 
-  private extractToken(request: any): string | null {
-    const authHeader = request.header('authorization')
+  async changePassword({ request, response }: HttpContext) {
+    try {
+      const token = TokenUtils.extractFromRequest(request)
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return null
+      if (!token) {
+        return response.status(401).json({
+          success: false,
+          message: 'Token requerido',
+          data: null,
+        })
+      }
+
+      const validation = await User.validateToken(token)
+
+      if (!validation) {
+        return response.status(401).json({
+          success: false,
+          message: 'Token inválido',
+          data: null,
+        })
+      }
+
+      const payload = await request.validateUsing(changePasswordValidator)
+      await this.authService.changePassword(validation.user, payload)
+
+      return response.status(200).json({
+        success: true,
+        message: 'Contraseña cambiada exitosamente',
+        data: null,
+      })
+    } catch (error) {
+      return response.status(400).json({
+        success: false,
+        message: error.message || 'Error al cambiar contraseña',
+        data: null,
+      })
     }
-
-    return authHeader.slice(7)
   }
 }

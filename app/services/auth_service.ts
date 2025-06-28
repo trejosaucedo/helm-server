@@ -1,4 +1,4 @@
-// services/auth_service.ts
+// app/services/auth_service.ts
 import hash from '@adonisjs/core/services/hash'
 import { UserRepository } from '#repositories/user_repository'
 import type {
@@ -11,6 +11,11 @@ import type {
 import { CascoService } from '#services/casco_service'
 import User from '#models/user'
 
+export interface ChangePasswordDto {
+  currentPassword: string
+  newPassword: string
+}
+
 export class AuthService {
   private userRepository: UserRepository
   private cascoService: CascoService
@@ -21,7 +26,6 @@ export class AuthService {
   }
 
   async register(data: RegisterSupervisorDto): Promise<AuthResponseDto> {
-    // Validate email doesn't exist
     const emailExists = await this.userRepository.emailExists(data.email)
     if (emailExists) {
       throw new Error('El email ya está registrado')
@@ -69,6 +73,20 @@ export class AuthService {
     return await User.validateToken(tokenId)
   }
 
+  async changePassword(user: User, data: ChangePasswordDto): Promise<void> {
+    const isValidCurrentPassword = await hash.verify(user.password, data.currentPassword)
+
+    if (!isValidCurrentPassword) {
+      throw new Error('La contraseña actual es incorrecta')
+    }
+
+    user.password = data.newPassword
+    await user.save()
+
+    // Opcional: Revocar todas las sesiones activas por seguridad
+    await user.revokeAllTokens()
+  }
+
   private mapUserToResponse(user: User): UserResponseDto {
     return {
       id: user.id,
@@ -88,15 +106,17 @@ export class AuthService {
     if (emailExists) {
       throw new Error('El email ya está registrado')
     }
+
     if (!data.cascoId) {
       throw new Error('El ID de casco es requerido para mineros')
     }
-    const cascoIdExists = await this.cascoService.isCascoAvailable(data.cascoId)
-    if (cascoIdExists) {
+
+    const cascoExists = await this.cascoService.isCascoAvailable(data.cascoId)
+    if (cascoExists) {
       throw new Error('El ID de casco ya está registrado')
     }
 
-    const temporaryPassword = Math.random().toString(36).slice(-8)
+    const temporaryPassword = this.generateTemporaryPassword()
 
     const user = await this.userRepository.createMinero({
       ...data,
@@ -108,5 +128,17 @@ export class AuthService {
       temporaryPassword,
       message: 'Minero registrado exitosamente',
     }
+  }
+
+  private generateTemporaryPassword(): string {
+    const length = 12
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+    let password = ''
+
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length))
+    }
+
+    return password
   }
 }

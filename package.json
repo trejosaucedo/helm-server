@@ -32,7 +32,8 @@
     "#config/*": "./config/*.js",
     "#repositories/*": "./app/repositories/*.js",
     "#types/*": "./app/types/*.js",
-    "#dtos/*": "./app/dtos/*.js"
+    "#dtos/*": "./app/dtos/*.js",
+    "#utils/*": "./app/utils/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^7.8.2",

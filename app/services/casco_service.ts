@@ -1,3 +1,4 @@
+// app/services/casco_service.ts
 import { UserRepository } from '#repositories/user_repository'
 import type { CascoDto } from '#types/casco'
 
@@ -10,7 +11,6 @@ export class CascoService {
 
   async getAvailableCascos(): Promise<CascoDto[]> {
     const assignedCascos = await this.userRepository.getAllAssignedCascos()
-
     const allCascos = this.getAllSystemCascos()
 
     return allCascos.map((casco) => ({
@@ -36,9 +36,29 @@ export class CascoService {
       throw new Error('Usuario no encontrado')
     }
 
+    if (user.role !== 'minero') {
+      throw new Error('Solo los mineros pueden tener cascos asignados')
+    }
+
     await this.userRepository.updateMinero({
       id: user.id,
       cascoId,
+    })
+  }
+
+  async unassignCasco(userId: string): Promise<void> {
+    const user = await this.userRepository.findById(userId)
+    if (!user) {
+      throw new Error('Usuario no encontrado')
+    }
+
+    if (!user.cascoId) {
+      throw new Error('El usuario no tiene casco asignado')
+    }
+
+    await this.userRepository.updateMinero({
+      id: user.id,
+      cascoId: null,
     })
   }
 

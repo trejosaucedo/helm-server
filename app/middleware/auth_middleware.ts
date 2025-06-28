@@ -1,10 +1,12 @@
+// app/middleware/auth_middleware.ts
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
+import { TokenUtils } from '#utils/token_utils'
 import User from '#models/user'
 
 export default class AuthMiddleware {
   async handle(ctx: HttpContext, next: NextFn) {
-    const token = this.extractToken(ctx)
+    const token = TokenUtils.extractFromContext(ctx)
 
     if (!token) {
       return ctx.response.status(401).json({
@@ -24,20 +26,10 @@ export default class AuthMiddleware {
       })
     }
 
+    // Agregar user y tokenData al contexto para uso posterior
+    ctx.user = validation.user
+    ctx.tokenData = validation.tokenData
+
     return next()
-  }
-
-  private extractToken(ctx: HttpContext): string | null {
-    const authHeader = ctx.request.header('authorization')
-
-    if (!authHeader) {
-      return null
-    }
-
-    if (!authHeader.startsWith('Bearer ')) {
-      return null
-    }
-
-    return authHeader.slice(7) // Remove 'Bearer ' prefix
   }
 }
