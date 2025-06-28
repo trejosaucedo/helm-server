@@ -12,7 +12,7 @@ server.use([
 router.use([
   () => import('@adonisjs/core/bodyparser_middleware'),
   () => import('@adonisjs/auth/initialize_auth_middleware'),
-  () => import('#middleware/auth_middleware')
+  () => import('#middleware/auth_middleware'),
 ])
 
 export const middleware = router.named({
