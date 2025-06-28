@@ -1,89 +1,114 @@
-// app/services/casco_service.ts
+import { CascoRepository } from '#repositories/casco_repository'
 import { UserRepository } from '#repositories/user_repository'
-import type { CascoDto } from '#types/casco'
+import type { ActivateCascoDto, CascoResponseDto } from '#dtos/casco'
 
 export class CascoService {
+  private cascoRepository: CascoRepository
   private userRepository: UserRepository
 
   constructor() {
+    this.cascoRepository = new CascoRepository()
     this.userRepository = new UserRepository()
   }
 
-  async getAvailableCascos(): Promise<CascoDto[]> {
-    const assignedCascos = await this.userRepository.getAllAssignedCascos()
-    const allCascos = this.getAllSystemCascos()
-
-    return allCascos.map((casco) => ({
-      id: casco,
-      isAvailable: !assignedCascos.includes(casco),
-      assignedUserId: undefined,
-    }))
-  }
-
-  async isCascoAvailable(cascoId: string): Promise<boolean> {
-    const existingUser = await this.userRepository.findByCascoId(cascoId)
-    return existingUser === null
-  }
-
-  async assignCasco(cascoId: string, userId: string): Promise<void> {
-    const isAvailable = await this.isCascoAvailable(cascoId)
+  async activateCasco(supervisorId: string, data: ActivateCascoDto): Promise<CascoResponseDto> {
+    // Verificar que el ID físico no esté ya en uso
+    const isAvailable = await this.cascoRepository.isPhysicalIdAvailable(data.physicalId)
     if (!isAvailable) {
-      throw new Error('El casco no está disponible')
+      throw new Error('Este casco ya está activado por otro supervisor')
     }
 
-    const user = await this.userRepository.findById(userId)
-    if (!user) {
-      throw new Error('Usuario no encontrado')
-    }
-
-    if (user.role !== 'minero') {
-      throw new Error('Solo los mineros pueden tener cascos asignados')
-    }
-
-    await this.userRepository.updateMinero({
-      id: user.id,
-      cascoId,
-    })
+    const casco = await this.cascoRepository.createCasco(supervisorId, data.physicalId)
+    return this.mapCascoToResponse(casco)
   }
 
-  async unassignCasco(userId: string): Promise<void> {
-    const user = await this.userRepository.findById(userId)
-    if (!user) {
-      throw new Error('Usuario no encontrado')
-    }
-
-    if (!user.cascoId) {
-      throw new Error('El usuario no tiene casco asignado')
-    }
-
-    await this.userRepository.updateMinero({
-      id: user.id,
-      cascoId: null,
-    })
+  async getCascosBySupervisor(supervisorId: string): Promise<CascoResponseDto[]> {
+    const cascos = await this.cascoRepository.findBySupervisorId(supervisorId)
+    return cascos.map((casco) => this.mapCascoToResponse(casco))
   }
 
-  private getAllSystemCascos(): string[] {
-    return [
-      'CASCO001',
-      'CASCO002',
-      'CASCO003',
-      'CASCO004',
-      'CASCO005',
-      'CASCO006',
-      'CASCO007',
-      'CASCO008',
-      'CASCO009',
-      'CASCO010',
-      'CASCO011',
-      'CASCO012',
-      'CASCO013',
-      'CASCO014',
-      'CASCO015',
-      'CASCO016',
-      'CASCO017',
-      'CASCO018',
-      'CASCO019',
-      'CASCO020',
-    ]
+  async getAvailableCascos(supervisorId: string): Promise<CascoResponseDto[]> {
+    const cascos = await this.cascoRepository.findAvailableBySupervisor(supervisorId)
+    return cascos.map((casco) => this.mapCascoToResponse(casco))
+  }
+
+  async assignCasco(cascoId: string, mineroId: string, supervisorId: string): Promise<void> {
+    const casco = await this.cascoRepository.findById(cascoId)
+    if (!casco) {
+      throw new Error('Casco no encontrado')
+    }
+
+    if (casco.supervisorId !== supervisorId) {
+      throw new Error('No tienes permiso para asignar este casco')
+    }
+
+    if (casco.mineroId) {
+      throw new Error('El casco ya está asignado')
+    }
+
+    if (!casco.isActive) {
+      throw new Error('El casco no está activo')
+    }
+
+    const minero = await this.userRepository.findById(mineroId)
+    if (!minero) {
+      throw new Error('Minero no encontrado')
+    }
+
+    if (minero.role !== 'minero') {
+      throw new Error('El usuario debe ser un minero')
+    }
+
+    await this.cascoRepository.assignToMinero(cascoId, mineroId)
+  }
+
+  async unassignCasco(cascoId: string, supervisorId: string): Promise<void> {
+    const casco = await this.cascoRepository.findById(cascoId)
+    if (!casco) {
+      throw new Error('Casco no encontrado')
+    }
+
+    if (casco.supervisorId !== supervisorId) {
+      throw new Error('No tienes permiso para desasignar este casco')
+    }
+
+    if (!casco.mineroId) {
+      throw new Error('El casco no está asignado')
+    }
+
+    await this.cascoRepository.unassignFromMinero(cascoId)
+  }
+
+  async deactivateCasco(cascoId: string, supervisorId: string): Promise<void> {
+    const casco = await this.cascoRepository.findById(cascoId)
+    if (!casco) {
+      throw new Error('Casco no encontrado')
+    }
+
+    if (casco.supervisorId !== supervisorId) {
+      throw new Error('No tienes permiso para desactivar este casco')
+    }
+
+    await this.cascoRepository.deactivateCasco(cascoId)
+  }
+
+  private mapCascoToResponse(casco: any): CascoResponseDto {
+    return {
+      id: casco.id,
+      physicalId: casco.physicalId,
+      supervisorId: casco.supervisorId,
+      mineroId: casco.mineroId,
+      isActive: casco.isActive,
+      isAssigned: !!casco.mineroId,
+      createdAt: casco.createdAt.toISO(),
+      updatedAt: casco.updatedAt?.toISO() || null,
+      minero: casco.minero
+        ? {
+            id: casco.minero.id,
+            fullName: casco.minero.fullName,
+            email: casco.minero.email,
+          }
+        : undefined,
+    }
   }
 }

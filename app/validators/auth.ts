@@ -22,3 +22,10 @@ export const registerMineroValidator = vine.compile(
     cascoId: vine.string().trim(),
   })
 )
+
+export const changePasswordValidator = vine.compile(
+  vine.object({
+    currentPassword: vine.string(),
+    newPassword: vine.string().minLength(8),
+  })
+)

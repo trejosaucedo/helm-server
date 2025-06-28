@@ -1,5 +1,3 @@
-// dtos/auth.ts
-
 export interface RegisterSupervisorDto {
   fullName: string
   email: string
@@ -9,12 +7,17 @@ export interface RegisterSupervisorDto {
 export interface RegisterMineroDto {
   fullName: string
   email: string
-  cascoId: string
+  cascoId: string // ID del casco que se le asignará
 }
 
 export interface LoginDto {
   email: string
   password: string
+}
+
+export interface ChangePasswordDto {
+  currentPassword: string
+  newPassword: string
 }
 
 export interface AuthResponseDto {

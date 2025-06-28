@@ -13,7 +13,6 @@ export interface AuthenticatedContext {
   tokenData: TokenData
 }
 
-// Extend HttpContext to include auth properties
 declare module '@adonisjs/core/http' {
   interface HttpContext {
     user?: User

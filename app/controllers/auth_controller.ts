@@ -1,4 +1,3 @@
-// app/controllers/auth_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
 import {
   registerSupervisorValidator,
@@ -8,6 +7,7 @@ import {
 } from '#validators/auth'
 import { AuthService } from '#services/auth_service'
 import { TokenUtils } from '#utils/token_utils'
+import { ErrorHandler } from '#utils/error_handler'
 import User from '#models/user'
 
 export default class AuthController {
@@ -28,20 +28,41 @@ export default class AuthController {
         data: result,
       })
     } catch (error) {
-      const status = error.message?.includes('ya está registrado') ? 409 : 400
-
-      return response.status(status).json({
-        success: false,
-        message: error.message || 'Error al registrar usuario',
-        data: null,
-      })
+      ErrorHandler.logError(error, 'AUTH_REGISTER')
+      return ErrorHandler.handleError(error, response, 'Error al registrar usuario', 400)
     }
   }
 
   async registerMinero({ request, response }: HttpContext) {
     try {
+      const token = TokenUtils.extractFromRequest(request)
+      if (!token) {
+        return response.status(401).json({
+          success: false,
+          message: 'Token requerido',
+          data: null,
+        })
+      }
+
+      const validation = await User.validateToken(token)
+      if (!validation) {
+        return response.status(401).json({
+          success: false,
+          message: 'Token inválido',
+          data: null,
+        })
+      }
+
+      if (!validation.user.isSupervisor()) {
+        return response.status(403).json({
+          success: false,
+          message: 'Solo los supervisores pueden registrar mineros',
+          data: null,
+        })
+      }
+
       const payload = await request.validateUsing(registerMineroValidator)
-      const result = await this.authService.registerMinero(payload)
+      const result = await this.authService.registerMinero(payload, validation.user.id)
 
       return response.status(201).json({
         success: true,
@@ -49,13 +70,8 @@ export default class AuthController {
         data: result,
       })
     } catch (error) {
-      const status = error.message?.includes('ya está registrado') ? 409 : 400
-
-      return response.status(status).json({
-        success: false,
-        message: error.message || 'Error al registrar minero',
-        data: null,
-      })
+      ErrorHandler.logError(error, 'AUTH_REGISTER_MINER')
+      return ErrorHandler.handleError(error, response, 'Error al registrar minero', 400)
     }
   }
 
@@ -70,11 +86,8 @@ export default class AuthController {
         data: result,
       })
     } catch (error) {
-      return response.status(401).json({
-        success: false,
-        message: error.message || 'Error al iniciar sesión',
-        data: null,
-      })
+      ErrorHandler.logError(error, 'AUTH_LOGIN')
+      return ErrorHandler.handleError(error, response, 'Error al iniciar sesión', 401)
     }
   }
 
@@ -108,11 +121,8 @@ export default class AuthController {
         data: null,
       })
     } catch (error) {
-      return response.status(500).json({
-        success: false,
-        message: 'Error al cerrar sesión',
-        data: null,
-      })
+      ErrorHandler.logError(error, 'AUTH_LOGOUT')
+      return ErrorHandler.handleError(error, response, 'Error al cerrar sesión', 500)
     }
   }
 
@@ -146,11 +156,8 @@ export default class AuthController {
         data: null,
       })
     } catch (error) {
-      return response.status(500).json({
-        success: false,
-        message: 'Error al cerrar sesiones',
-        data: null,
-      })
+      ErrorHandler.logError(error, 'AUTH_LOGOUT_ALL')
+      return ErrorHandler.handleError(error, response, 'Error al cerrar sesiones', 500)
     }
   }
 
@@ -192,11 +199,8 @@ export default class AuthController {
         },
       })
     } catch (error) {
-      return response.status(500).json({
-        success: false,
-        message: 'Error al obtener usuario',
-        data: null,
-      })
+      ErrorHandler.logError(error, 'AUTH_ME')
+      return ErrorHandler.handleError(error, response, 'Error al obtener usuario', 500)
     }
   }
 
@@ -231,11 +235,8 @@ export default class AuthController {
         data: null,
       })
     } catch (error) {
-      return response.status(400).json({
-        success: false,
-        message: error.message || 'Error al cambiar contraseña',
-        data: null,
-      })
+      ErrorHandler.logError(error, 'AUTH_CHANGE_PASSWORD')
+      return ErrorHandler.handleError(error, response, 'Error al cambiar contraseña', 400)
     }
   }
 }

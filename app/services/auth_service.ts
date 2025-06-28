@@ -1,28 +1,23 @@
-// app/services/auth_service.ts
 import hash from '@adonisjs/core/services/hash'
 import { UserRepository } from '#repositories/user_repository'
+import { CascoRepository } from '#repositories/casco_repository'
 import type {
   LoginDto,
   AuthResponseDto,
   UserResponseDto,
   RegisterMineroDto,
   RegisterSupervisorDto,
+  ChangePasswordDto,
 } from '#dtos/auth'
-import { CascoService } from '#services/casco_service'
 import User from '#models/user'
-
-export interface ChangePasswordDto {
-  currentPassword: string
-  newPassword: string
-}
 
 export class AuthService {
   private userRepository: UserRepository
-  private cascoService: CascoService
+  private cascoRepository: CascoRepository
 
   constructor() {
     this.userRepository = new UserRepository()
-    this.cascoService = new CascoService()
+    this.cascoRepository = new CascoRepository()
   }
 
   async register(data: RegisterSupervisorDto): Promise<AuthResponseDto> {
@@ -83,8 +78,51 @@ export class AuthService {
     user.password = data.newPassword
     await user.save()
 
-    // Opcional: Revocar todas las sesiones activas por seguridad
     await user.revokeAllTokens()
+  }
+
+  async registerMinero(
+    data: RegisterMineroDto,
+    supervisorId: string
+  ): Promise<{ user: UserResponseDto; temporaryPassword: string; message: string }> {
+    const emailExists = await this.userRepository.emailExists(data.email)
+    if (emailExists) {
+      throw new Error('El email ya está registrado')
+    }
+
+    // Verificar que el casco existe y pertenece al supervisor
+    const casco = await this.cascoRepository.findById(data.cascoId)
+    if (!casco) {
+      throw new Error('El casco no existe')
+    }
+
+    if (casco.supervisorId !== supervisorId) {
+      throw new Error('El casco no pertenece a este supervisor')
+    }
+
+    if (casco.mineroId) {
+      throw new Error('El casco ya está asignado a otro minero')
+    }
+
+    if (!casco.isActive) {
+      throw new Error('El casco no está activo')
+    }
+
+    const temporaryPassword = this.generateTemporaryPassword()
+
+    const user = await this.userRepository.createMinero({
+      ...data,
+      password: temporaryPassword,
+    })
+
+    // Asignar el casco al minero
+    await this.cascoRepository.assignToMinero(casco.id, user.id)
+
+    return {
+      user: this.mapUserToResponse(user),
+      temporaryPassword,
+      message: 'Minero registrado exitosamente',
+    }
   }
 
   private mapUserToResponse(user: User): UserResponseDto {
@@ -96,37 +134,6 @@ export class AuthService {
       cascoId: user.cascoId,
       createdAt: user.createdAt.toISO()!,
       updatedAt: user.updatedAt?.toISO() || null,
-    }
-  }
-
-  async registerMinero(
-    data: RegisterMineroDto
-  ): Promise<{ user: UserResponseDto; temporaryPassword: string; message: string }> {
-    const emailExists = await this.userRepository.emailExists(data.email)
-    if (emailExists) {
-      throw new Error('El email ya está registrado')
-    }
-
-    if (!data.cascoId) {
-      throw new Error('El ID de casco es requerido para mineros')
-    }
-
-    const cascoExists = await this.cascoService.isCascoAvailable(data.cascoId)
-    if (cascoExists) {
-      throw new Error('El ID de casco ya está registrado')
-    }
-
-    const temporaryPassword = this.generateTemporaryPassword()
-
-    const user = await this.userRepository.createMinero({
-      ...data,
-      password: temporaryPassword,
-    })
-
-    return {
-      user: this.mapUserToResponse(user),
-      temporaryPassword,
-      message: 'Minero registrado exitosamente',
     }
   }
 

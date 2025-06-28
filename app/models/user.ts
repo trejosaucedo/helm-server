@@ -1,10 +1,12 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { BaseModel, column, beforeCreate, hasMany } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import redis from '@adonisjs/redis/services/main'
-import { randomBytes } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
+import type { HasMany } from '@adonisjs/lucid/types/relations'
+import Casco from './casco.js'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -36,6 +38,18 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 
+  @hasMany(() => Casco, {
+    foreignKey: 'supervisorId',
+  })
+  declare cascos: HasMany<typeof Casco>
+
+  @beforeCreate()
+  static assignUuid(user: User) {
+    if (!user.id) {
+      user.id = randomUUID()
+    }
+  }
+
   async generateToken() {
     const tokenId = randomBytes(32).toString('hex')
     const tokenData = {
@@ -47,8 +61,6 @@ export default class User extends compose(BaseModel, AuthFinder) {
     }
 
     await redis.setex(`auth:token:${tokenId}`, 86400, JSON.stringify(tokenData))
-
-    // Add to user's active sessions
     await redis.sadd(`user:${this.id}:sessions`, tokenId)
     await redis.expire(`user:${this.id}:sessions`, 86400)
 
@@ -63,7 +75,6 @@ export default class User extends compose(BaseModel, AuthFinder) {
     const user = await User.find(parsed.userId)
 
     if (!user) {
-      // Clean invalid token
       await redis.del(`auth:token:${tokenId}`)
       return null
     }
@@ -88,12 +99,10 @@ export default class User extends compose(BaseModel, AuthFinder) {
     }
   }
 
-  // Method to check if user is supervisor
   isSupervisor(): boolean {
     return this.role === 'supervisor'
   }
 
-  // Method to check if user is minero
   isMinero(): boolean {
     return this.role === 'minero'
   }

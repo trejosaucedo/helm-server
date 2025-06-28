@@ -1,6 +1,5 @@
-// repositories/user_repository.ts
 import User from '#models/user'
-import { UpdateMineroDto, UpdateSupervisorDto } from '#types/user'
+import { UpdateMineroData, UpdateSupervisorData } from '#types/user'
 import { RegisterMineroDto, RegisterSupervisorDto } from '#dtos/auth'
 
 export class UserRepository {
@@ -16,7 +15,7 @@ export class UserRepository {
     return await User.findBy('casco_id', cascoId)
   }
 
-  async updateMinero(data: UpdateMineroDto): Promise<User | null> {
+  async updateMinero(data: UpdateMineroData): Promise<User | null> {
     const user = await this.findById(data.id)
     if (!user) {
       return null
@@ -30,7 +29,7 @@ export class UserRepository {
     return user
   }
 
-  async update(data: UpdateSupervisorDto): Promise<User | null> {
+  async update(data: UpdateSupervisorData): Promise<User | null> {
     const user = await this.findById(data.id)
     if (!user) {
       return null
@@ -80,11 +79,12 @@ export class UserRepository {
     return await User.query().where('role', role)
   }
 
-  async getAllAssignedCascos(): Promise<string[]> {
-    const users = await User.query().whereNotNull('casco_id').select('casco_id')
-
-    return users
-      .map((user) => user.cascoId)
-      .filter((cascoId): cascoId is string => cascoId !== null)
+  async getMinerosBySupervisor(supervisorId: string): Promise<User[]> {
+    // Obtiene los mineros que tienen cascos asignados por este supervisor
+    return await User.query()
+      .where('role', 'minero')
+      .whereHas('cascos', (query) => {
+        query.where('supervisor_id', supervisorId)
+      })
   }
 }
