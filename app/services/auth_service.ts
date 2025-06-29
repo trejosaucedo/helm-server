@@ -126,15 +126,20 @@ export class AuthService {
   }
 
   private mapUserToResponse(user: User): UserResponseDto {
-    return {
+    const response: UserResponseDto = {
       id: user.id,
       fullName: user.fullName,
       email: user.email,
       role: user.role,
-      cascoId: user.cascoId,
       createdAt: user.createdAt.toISO()!,
       updatedAt: user.updatedAt?.toISO() || null,
     }
+
+    if (user.role === 'minero') {
+      response.cascoId = user.cascoId
+    }
+
+    return response
   }
 
   private generateTemporaryPassword(): string {

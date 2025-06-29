@@ -44,7 +44,7 @@ export default class CascoController {
         })
       }
 
-      const { cascoId } = request.only(['cascoId'])
+      const cascoId = request.input('cascoId')
       await this.cascoService.deactivateCasco(cascoId, user.id)
 
       return response.status(200).json({
@@ -138,7 +138,7 @@ export default class CascoController {
         })
       }
 
-      const { cascoId } = request.only(['cascoId'])
+      const cascoId = request.input('cascoId')
       await this.cascoService.unassignCasco(cascoId, user.id)
 
       return response.status(200).json({

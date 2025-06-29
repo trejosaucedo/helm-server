@@ -26,7 +26,7 @@ export interface AuthResponseDto {
     fullName: string | null
     email: string
     role: 'supervisor' | 'minero'
-    cascoId: string | null
+    cascoId?: string | null
     createdAt: string
     updatedAt: string | null
   }
@@ -38,7 +38,7 @@ export interface UserResponseDto {
   fullName: string | null
   email: string
   role: 'supervisor' | 'minero'
-  cascoId: string | null
+  cascoId?: string | null
   createdAt: string
   updatedAt: string | null
 }

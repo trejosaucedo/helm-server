@@ -60,6 +60,34 @@ export default class User extends compose(BaseModel, AuthFinder) {
       createdAt: new Date().toISOString(),
     }
 
+    // Verificar sesiones activas actuales
+    const currentSessions = await redis.smembers(`user:${this.id}:sessions`)
+
+    // Si ya hay 5 sesiones, eliminar la más antigua
+    if (currentSessions.length === 5) {
+      // Obtener los datos de todas las sesiones para encontrar la más antigua
+      const sessionPromises = currentSessions.map(async (sessionId) => {
+        const sessionData = await redis.get(`auth:token:${sessionId}`)
+        return sessionData
+          ? {
+              id: sessionId,
+              data: JSON.parse(sessionData),
+            }
+          : null
+      })
+
+      const sessions = (await Promise.all(sessionPromises))
+        .filter((session) => session !== null)
+        .sort((a, b) => new Date(a.data.createdAt).getTime() - new Date(b.data.createdAt).getTime())
+
+      if (sessions.length > 0) {
+        const oldestSession = sessions[0]
+        await redis.del(`auth:token:${oldestSession.id}`)
+        await redis.srem(`user:${this.id}:sessions`, oldestSession.id)
+      }
+    }
+
+    // Crear la nueva sesión
     await redis.setex(`auth:token:${tokenId}`, 86400, JSON.stringify(tokenData))
     await redis.sadd(`user:${this.id}:sessions`, tokenId)
     await redis.expire(`user:${this.id}:sessions`, 86400)

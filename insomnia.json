@@ -1,21 +1,21 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2025-01-28T12:00:00.000Z",
+  "__export_date": "2025-01-24T00:00:00.000Z",
   "__export_source": "insomnia.desktop.app:v2023.5.8",
   "resources": [
     {
-      "_id": "req_auth_register_supervisor",
+      "_id": "req_001",
       "parentId": "fld_auth",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "url": "{{ _.base_url }}/register",
-      "name": "Register Supervisor",
-      "description": "Registrar un nuevo supervisor",
+      "name": "1. Register Supervisor",
+      "description": "Registra un nuevo supervisor",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"fullName\": \"Juan Pérez\",\n  \"email\": \"supervisor@example.com\",\n  \"password\": \"password123\"\n}"
+        "text": "{\n  \"fullName\": \"Juan Pérez\",\n  \"email\": \"supervisor@test.com\",\n  \"password\": \"password123\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -25,7 +25,7 @@
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674984000000,
+      "metaSortKey": -1706140800000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -36,17 +36,17 @@
       "_type": "request"
     },
     {
-      "_id": "req_auth_login",
+      "_id": "req_002",
       "parentId": "fld_auth",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "url": "{{ _.base_url }}/login",
-      "name": "Login",
-      "description": "Iniciar sesión",
+      "name": "2. Login",
+      "description": "Inicia sesión y obtiene token",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"email\": \"supervisor@example.com\",\n  \"password\": \"password123\"\n}"
+        "text": "{\n  \"email\": \"supervisor@test.com\",\n  \"password\": \"password123\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -56,7 +56,7 @@
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674983000000,
+      "metaSortKey": -1706140700000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -67,24 +67,24 @@
       "_type": "request"
     },
     {
-      "_id": "req_auth_me",
+      "_id": "req_003",
       "parentId": "fld_auth",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "url": "{{ _.base_url }}/me",
-      "name": "Get Current User",
-      "description": "Obtener información del usuario actual",
+      "name": "3. Get Current User",
+      "description": "Obtiene información del usuario actual",
       "method": "GET",
       "body": {},
       "parameters": [],
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
+          "value": "Bearer {{ _.token }}"
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674982000000,
+      "metaSortKey": -1706140600000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -95,52 +95,31 @@
       "_type": "request"
     },
     {
-      "_id": "req_auth_logout",
+      "_id": "req_004",
       "parentId": "fld_auth",
-      "modified": 1674984000000,
-      "created": 1674984000000,
-      "url": "{{ _.base_url }}/logout",
-      "name": "Logout",
-      "description": "Cerrar sesión actual",
+      "modified": 1706140800000,
+      "created": 1706140800000,
+      "url": "{{ _.base_url }}/register-minero",
+      "name": "4. Register Minero",
+      "description": "Registra un nuevo minero (solo supervisores)",
       "method": "POST",
-      "body": {},
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"fullName\": \"Carlos Minero\",\n  \"email\": \"minero@test.com\",\n  \"cascoId\": \"CASCO001\"\n}"
+      },
       "parameters": [],
       "headers": [
         {
-          "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
-        }
-      ],
-      "authentication": {},
-      "metaSortKey": -1674981000000,
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_auth_logout_all",
-      "parentId": "fld_auth",
-      "modified": 1674984000000,
-      "created": 1674984000000,
-      "url": "{{ _.base_url }}/logout-all",
-      "name": "Logout All Sessions",
-      "description": "Cerrar todas las sesiones",
-      "method": "POST",
-      "body": {},
-      "parameters": [],
-      "headers": [
+          "name": "Content-Type",
+          "value": "application/json"
+        },
         {
           "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
+          "value": "Bearer {{ _.token }}"
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674980000000,
+      "metaSortKey": -1706140500000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -151,13 +130,13 @@
       "_type": "request"
     },
     {
-      "_id": "req_auth_change_password",
+      "_id": "req_005",
       "parentId": "fld_auth",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "url": "{{ _.base_url }}/change-password",
-      "name": "Change Password",
-      "description": "Cambiar contraseña",
+      "name": "5. Change Password",
+      "description": "Cambia la contraseña del usuario actual",
       "method": "PUT",
       "body": {
         "mimeType": "application/json",
@@ -171,11 +150,11 @@
         },
         {
           "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
+          "value": "Bearer {{ _.token }}"
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674979000000,
+      "metaSortKey": -1706140400000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -186,31 +165,24 @@
       "_type": "request"
     },
     {
-      "_id": "req_auth_register_minero",
+      "_id": "req_006",
       "parentId": "fld_auth",
-      "modified": 1674984000000,
-      "created": 1674984000000,
-      "url": "{{ _.base_url }}/register-minero",
-      "name": "Register Minero",
-      "description": "Registrar un nuevo minero (solo supervisores)",
+      "modified": 1706140800000,
+      "created": 1706140800000,
+      "url": "{{ _.base_url }}/logout",
+      "name": "6. Logout",
+      "description": "Cierra sesión actual",
       "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"fullName\": \"Carlos Minero\",\n  \"email\": \"minero@example.com\",\n  \"cascoId\": \"casco-001\"\n}"
-      },
+      "body": {},
       "parameters": [],
       "headers": [
         {
-          "name": "Content-Type",
-          "value": "application/json"
-        },
-        {
           "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
+          "value": "Bearer {{ _.token }}"
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674978000000,
+      "metaSortKey": -1706140300000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -221,17 +193,45 @@
       "_type": "request"
     },
     {
-      "_id": "req_casco_activate",
+      "_id": "req_007",
+      "parentId": "fld_auth",
+      "modified": 1706140800000,
+      "created": 1706140800000,
+      "url": "{{ _.base_url }}/logout-all",
+      "name": "7. Logout All Sessions",
+      "description": "Cierra todas las sesiones del usuario",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1706140200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_008",
       "parentId": "fld_cascos",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "url": "{{ _.base_url }}/cascos/activate",
-      "name": "Activate Casco",
-      "description": "Activar un casco nuevo",
+      "name": "1. Activate Casco",
+      "description": "Activa un nuevo casco",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"physicalId\": \"CASCO-001\"\n}"
+        "text": "{\n  \"physicalId\": \"CASCO001\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -241,11 +241,11 @@
         },
         {
           "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
+          "value": "Bearer {{ _.token }}"
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674977000000,
+      "metaSortKey": -1706140100000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -256,59 +256,24 @@
       "_type": "request"
     },
     {
-      "_id": "req_casco_deactivate",
+      "_id": "req_009",
       "parentId": "fld_cascos",
-      "modified": 1674984000000,
-      "created": 1674984000000,
-      "url": "{{ _.base_url }}/cascos/deactivate",
-      "name": "Deactivate Casco",
-      "description": "Desactivar un casco",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"cascoId\": \"1\"\n}"
-      },
-      "parameters": [],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
-        }
-      ],
-      "authentication": {},
-      "metaSortKey": -1674976000000,
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_casco_list",
-      "parentId": "fld_cascos",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "url": "{{ _.base_url }}/cascos",
-      "name": "List Cascos",
-      "description": "Obtener todos los cascos del supervisor",
+      "name": "2. Get All Cascos",
+      "description": "Obtiene todos los cascos del supervisor",
       "method": "GET",
       "body": {},
       "parameters": [],
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
+          "value": "Bearer {{ _.token }}"
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674975000000,
+      "metaSortKey": -1706140000000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -319,24 +284,24 @@
       "_type": "request"
     },
     {
-      "_id": "req_casco_available",
+      "_id": "req_010",
       "parentId": "fld_cascos",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "url": "{{ _.base_url }}/cascos/available",
-      "name": "Available Cascos",
-      "description": "Obtener cascos disponibles para asignar",
+      "name": "3. Get Available Cascos",
+      "description": "Obtiene cascos disponibles para asignar",
       "method": "GET",
       "body": {},
       "parameters": [],
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
+          "value": "Bearer {{ _.token }}"
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674974000000,
+      "metaSortKey": -1706139900000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -347,17 +312,17 @@
       "_type": "request"
     },
     {
-      "_id": "req_casco_assign",
+      "_id": "req_011",
       "parentId": "fld_cascos",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "url": "{{ _.base_url }}/cascos/assign",
-      "name": "Assign Casco",
-      "description": "Asignar casco a un minero",
+      "name": "4. Assign Casco",
+      "description": "Asigna un casco a un minero",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"cascoId\": \"1\",\n  \"mineroId\": \"2\"\n}"
+        "text": "{\n  \"cascoId\": \"uuid-del-casco\",\n  \"mineroId\": \"uuid-del-minero\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -367,11 +332,11 @@
         },
         {
           "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
+          "value": "Bearer {{ _.token }}"
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674973000000,
+      "metaSortKey": -1706139800000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -382,17 +347,17 @@
       "_type": "request"
     },
     {
-      "_id": "req_casco_unassign",
+      "_id": "req_012",
       "parentId": "fld_cascos",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "url": "{{ _.base_url }}/cascos/unassign",
-      "name": "Unassign Casco",
-      "description": "Desasignar casco de un minero",
+      "name": "5. Unassign Casco",
+      "description": "Desasigna un casco de un minero",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"cascoId\": \"1\"\n}"
+        "text": "{\n  \"cascoId\": \"uuid-del-casco\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -402,11 +367,46 @@
         },
         {
           "name": "Authorization",
-          "value": "Bearer {{ _.auth_token }}"
+          "value": "Bearer {{ _.token }}"
         }
       ],
       "authentication": {},
-      "metaSortKey": -1674972000000,
+      "metaSortKey": -1706139700000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_013",
+      "parentId": "fld_cascos",
+      "modified": 1706140800000,
+      "created": 1706140800000,
+      "url": "{{ _.base_url }}/cascos/deactivate",
+      "name": "6. Deactivate Casco",
+      "description": "Desactiva un casco",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"cascoId\": \"uuid-del-casco\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1706139600000,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -419,56 +419,56 @@
     {
       "_id": "fld_auth",
       "parentId": "wrk_main",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "name": "Authentication",
       "description": "Endpoints de autenticación",
       "environment": {},
       "environmentPropertyOrder": null,
-      "metaSortKey": -1674984000000,
+      "metaSortKey": -1706140800000,
       "_type": "request_group"
     },
     {
       "_id": "fld_cascos",
       "parentId": "wrk_main",
-      "modified": 1674984000000,
-      "created": 1674984000000,
-      "name": "Cascos",
-      "description": "Endpoints de gestión de cascos",
+      "modified": 1706140800000,
+      "created": 1706140800000,
+      "name": "Cascos Management",
+      "description": "Endpoints para gestión de cascos",
       "environment": {},
       "environmentPropertyOrder": null,
-      "metaSortKey": -1674983000000,
+      "metaSortKey": -1706140700000,
       "_type": "request_group"
     },
     {
       "_id": "wrk_main",
       "parentId": null,
-      "modified": 1674984000000,
-      "created": 1674984000000,
-      "name": "Sistema de Minas API",
-      "description": "API para gestión de mineros y cascos",
+      "modified": 1706140800000,
+      "created": 1706140800000,
+      "name": "Mining Helmet API",
+      "description": "API para gestión de cascos mineros",
       "scope": "collection",
       "_type": "workspace"
     },
     {
       "_id": "env_main",
       "parentId": "wrk_main",
-      "modified": 1674984000000,
-      "created": 1674984000000,
+      "modified": 1706140800000,
+      "created": 1706140800000,
       "name": "Base Environment",
       "data": {
         "base_url": "http://localhost:3333",
-        "auth_token": ""
+        "token": ""
       },
       "dataPropertyOrder": {
         "&": [
           "base_url",
-          "auth_token"
+          "token"
         ]
       },
       "color": null,
       "isPrivate": false,
-      "metaSortKey": 1674984000000,
+      "metaSortKey": 1706140800000,
       "_type": "environment"
     }
   ]
