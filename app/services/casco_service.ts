@@ -12,13 +12,29 @@ export class CascoService {
   }
 
   async activateCasco(supervisorId: string, data: ActivateCascoDto): Promise<CascoResponseDto> {
-    // Verificar que el ID físico no esté ya en uso
-    const isAvailable = await this.cascoRepository.isPhysicalIdAvailable(data.physicalId)
-    if (!isAvailable) {
-      throw new Error('Este casco ya está activado por otro supervisor')
+    // Verificar que el casco existe en el sistema
+    const cascoExists = await this.cascoRepository.cascoExistsByPhysicalId(data.physicalId)
+    if (!cascoExists) {
+      throw new Error('El casco con este ID físico no existe en el sistema')
     }
 
-    const casco = await this.cascoRepository.createCasco(supervisorId, data.physicalId)
+    // Verificar que el casco está disponible para ser activado (no vinculado a otro supervisor)
+    const isAvailable = await this.cascoRepository.isPhysicalIdAvailableForActivation(
+      data.physicalId
+    )
+    if (!isAvailable) {
+      throw new Error('Este casco ya está vinculado a otro supervisor')
+    }
+
+    // Activar/vincular el casco al supervisor
+    const casco = await this.cascoRepository.activateCascoForSupervisor(
+      supervisorId,
+      data.physicalId
+    )
+    if (!casco) {
+      throw new Error('Error al activar el casco')
+    }
+
     return this.mapCascoToResponse(casco)
   }
 
