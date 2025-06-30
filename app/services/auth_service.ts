@@ -3,7 +3,6 @@ import { UserRepository } from '#repositories/user_repository'
 import { CascoRepository } from '#repositories/casco_repository'
 import type {
   LoginDto,
-  AuthResponseDto,
   UserResponseDto,
   RegisterMineroDto,
   RegisterSupervisorDto,
@@ -20,22 +19,43 @@ export class AuthService {
     this.cascoRepository = new CascoRepository()
   }
 
-  async register(data: RegisterSupervisorDto): Promise<AuthResponseDto> {
+  async register(
+    data: RegisterSupervisorDto,
+    deviceInfo?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<{
+    user: UserResponseDto
+    accessToken: string
+    sessionId: string
+  }> {
     const emailExists = await this.userRepository.emailExists(data.email)
     if (emailExists) {
       throw new Error('El email ya está registrado')
     }
 
     const user = await this.userRepository.createSupervisor(data)
-    const token = await user.generateToken()
+
+    // Generar tokens usando el método correcto del modelo
+    const tokenData = await user.generateTokens(deviceInfo, ipAddress, userAgent)
 
     return {
       user: this.mapUserToResponse(user),
-      token,
+      accessToken: tokenData.accessToken,
+      sessionId: tokenData.sessionId,
     }
   }
 
-  async login(data: LoginDto): Promise<AuthResponseDto> {
+  async login(
+    data: LoginDto,
+    deviceInfo?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<{
+    user: UserResponseDto
+    accessToken: string
+    sessionId: string
+  }> {
     const user = await this.userRepository.findByEmail(data.email)
 
     if (!user) {
@@ -48,24 +68,35 @@ export class AuthService {
       throw new Error('Credenciales inválidas')
     }
 
-    const token = await user.generateToken()
+    // Generar tokens usando el método correcto del modelo
+    const tokenData = await user.generateTokens(deviceInfo, ipAddress, userAgent)
 
     return {
       user: this.mapUserToResponse(user),
-      token,
+      accessToken: tokenData.accessToken,
+      sessionId: tokenData.sessionId,
     }
   }
 
-  async logout(tokenId: string, user: User): Promise<void> {
-    await user.revokeToken(tokenId)
+  async logout(sessionId: string, user: User): Promise<void> {
+    await user.revokeSession(sessionId)
   }
 
   async logoutAll(user: User): Promise<void> {
-    await user.revokeAllTokens()
+    await user.revokeAllSessions()
   }
 
-  async validateToken(tokenId: string): Promise<{ user: User } | null> {
-    return await User.validateToken(tokenId)
+  async validateAccessToken(accessToken: string): Promise<{ user: User } | null> {
+    const result = await User.validateAccessToken(accessToken)
+    return result ? { user: result.user } : null
+  }
+
+  async validateSession(sessionId: string): Promise<User | null> {
+    return await User.validateSession(sessionId)
+  }
+
+  async refreshToken(sessionId: string): Promise<string | null> {
+    return await User.refreshAccessToken(sessionId)
   }
 
   async changePassword(user: User, data: ChangePasswordDto): Promise<void> {
@@ -78,7 +109,8 @@ export class AuthService {
     user.password = data.newPassword
     await user.save()
 
-    await user.revokeAllTokens()
+    // Revocar todas las sesiones por seguridad
+    await user.revokeAllSessions()
   }
 
   async registerMinero(

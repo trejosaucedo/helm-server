@@ -6,11 +6,8 @@ export interface TokenData {
   role: 'supervisor' | 'minero'
   cascoId: string | null
   createdAt: string
-}
-
-export interface AuthenticatedContext {
-  user: User
-  tokenData: TokenData
+  sessionId?: string
+  type?: 'access' | 'refresh'
 }
 
 declare module '@adonisjs/core/http' {

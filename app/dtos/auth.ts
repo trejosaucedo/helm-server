@@ -30,7 +30,27 @@ export interface AuthResponseDto {
     createdAt: string
     updatedAt: string | null
   }
-  token: string
+  accessToken: string
+  refreshToken: string
+  sessionId: string
+}
+
+export interface RefreshTokenResponseDto {
+  accessToken: string
+  user: {
+    id: string
+    fullName: string | null
+    email: string
+    role: 'supervisor' | 'minero'
+    cascoId?: string | null
+    createdAt: string
+    updatedAt: string | null
+  }
+}
+
+export interface AuthTokenPair {
+  accessToken: string
+  refreshToken: string
 }
 
 export interface UserResponseDto {
