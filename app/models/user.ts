@@ -76,8 +76,9 @@ export default class User extends compose(BaseModel, AuthFinder) {
           : null
       })
 
-      const sessions = (await Promise.all(sessionPromises))
-        .filter((session) => session !== null)
+      const sessionResults = await Promise.all(sessionPromises)
+      const sessions = sessionResults
+        .filter((session): session is { id: string; data: any } => session !== null)
         .sort((a, b) => new Date(a.data.createdAt).getTime() - new Date(b.data.createdAt).getTime())
 
       if (sessions.length > 0) {
