@@ -7,6 +7,11 @@ export interface AssignCascoDto {
   mineroId: string
 }
 
+export interface CreateCascoDto {
+  supervisorId: string
+  physicalId: string
+}
+
 export interface CascoResponseDto {
   id: string
   physicalId: string

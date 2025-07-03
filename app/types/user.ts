@@ -15,7 +15,7 @@ export interface UserData {
   id: string
   fullName: string | null
   email: string
-  role: 'supervisor' | 'minero'
+  role: 'supervisor' | 'minero' | 'admin'
   cascoId: string | null
   createdAt: Date
   updatedAt: Date | null
