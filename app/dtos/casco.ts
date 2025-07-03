@@ -34,3 +34,8 @@ export interface CascoResponseDto {
     email: string
   }
 }
+
+export interface CreateCascoDto {
+  physicalId: string
+  supervisorId?: string
+}

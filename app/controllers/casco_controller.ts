@@ -3,6 +3,38 @@ import { CascoService } from '#services/casco_service'
 import { activateCascoValidator, assignCascoValidator } from '#validators/casco'
 import { ErrorHandler } from '#utils/error_handler'
 
+// Helpers
+function requireUser(ctx: HttpContext) {
+  if (!ctx.user) {
+    // Respondemos aquí y retornamos undefined, no lanzamos error
+    ctx.response.status(401).json({
+      success: false,
+      message: 'No autenticado',
+      data: null,
+    })
+    return undefined
+  }
+  return ctx.user
+}
+
+function jsonSuccess(
+  response: HttpContext['response'],
+  message: string,
+  data: any = null,
+  status = 200
+) {
+  return response.status(status).json({ success: true, message, data })
+}
+
+function jsonError(
+  response: HttpContext['response'],
+  message: string,
+  status = 400,
+  data: any = null
+) {
+  return response.status(status).json({ success: false, message, data })
+}
+
 export default class CascoController {
   private cascoService: CascoService
 
@@ -10,162 +42,107 @@ export default class CascoController {
     this.cascoService = new CascoService()
   }
 
-  async activate({ request, response, user }: HttpContext) {
+  async my_helmets(ctx: HttpContext) {
     try {
-      if (!user?.isSupervisor()) {
-        return response.status(403).json({
-          success: false,
-          message: 'Solo los supervisores pueden activar cascos',
-          data: null,
-        })
-      }
-
-      const payload = await request.validateUsing(activateCascoValidator)
-      const activationData = {
-        ...payload,
-        supervisorId: user.id,
-      }
-
-      const result = await this.cascoService.activateCasco(activationData)
-
-      return response.status(201).json({
-        success: true,
-        message: 'Casco activado exitosamente',
-        data: result,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'CASCO_ACTIVATE')
-      return ErrorHandler.handleError(error, response, 'Error al activar casco', 400)
-    }
-  }
-
-  async desactivate({ request, response, user }: HttpContext) {
-    try {
-      if (!user?.isSupervisor()) {
-        return response.status(403).json({
-          success: false,
-          message: 'Solo los supervisores pueden desactivar cascos',
-          data: null,
-        })
-      }
-
-      const cascoId = request.input('cascoId')
-      const desactivationData = {
-        cascoId,
-        supervisorId: user.id,
-      }
-      await this.cascoService.deactivateCasco(desactivationData)
-
-      return response.status(200).json({
-        success: true,
-        message: 'Casco desactivado exitosamente',
-        data: null,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'CASCO_DEACTIVATE')
-      return ErrorHandler.handleError(error, response, 'Error al desactivar casco', 400)
-    }
-  }
-
-  async index({ response, user }: HttpContext) {
-    try {
-      if (!user?.isSupervisor()) {
-        return response.status(403).json({
-          success: false,
-          message: 'Solo los supervisores pueden ver cascos',
-          data: null,
-        })
-      }
+      const user = requireUser(ctx)
+      if (!user) return
 
       const cascos = await this.cascoService.getCascosBySupervisor(user.id)
+      return jsonSuccess(ctx.response, 'Cascos obtenidos exitosamente', cascos)
+    } catch (error) {
+      ErrorHandler.logError(error, 'CASCO_MY_HELMETS')
+      return jsonError(ctx.response, error.message || 'Error al obtener cascos', 500)
+    }
+  }
 
-      return response.status(200).json({
-        success: true,
-        message: 'Cascos obtenidos exitosamente',
-        data: cascos,
-      })
+  async activate(ctx: HttpContext) {
+    try {
+      const user = requireUser(ctx)
+      if (!user) return
+
+      const payload = await ctx.request.validateUsing(activateCascoValidator)
+      const activationData = { ...payload, supervisorId: user.id }
+      const result = await this.cascoService.activateCasco(activationData)
+      return jsonSuccess(ctx.response, 'Casco activado exitosamente', result, 201)
+    } catch (error) {
+      ErrorHandler.logError(error, 'CASCO_ACTIVATE')
+      return jsonError(ctx.response, error.message || 'Error al activar casco', 400)
+    }
+  }
+
+  async desactivate(ctx: HttpContext) {
+    try {
+      const user = requireUser(ctx)
+      if (!user) return
+
+      const cascoId = ctx.request.input('cascoId')
+      const desactivationData = { cascoId, supervisorId: user.id }
+      await this.cascoService.deactivateCasco(desactivationData)
+      return jsonSuccess(ctx.response, 'Casco desactivado exitosamente')
+    } catch (error) {
+      ErrorHandler.logError(error, 'CASCO_DEACTIVATE')
+      return jsonError(ctx.response, error.message || 'Error al desactivar casco', 400)
+    }
+  }
+
+  async index(ctx: HttpContext) {
+    try {
+      const user = requireUser(ctx)
+      if (!user) return
+
+      const cascos = await this.cascoService.getCascosBySupervisor(user.id)
+      return jsonSuccess(ctx.response, 'Cascos obtenidos exitosamente', cascos)
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_INDEX')
-      return ErrorHandler.handleError(error, response, 'Error al obtener cascos', 500)
+      return jsonError(ctx.response, error.message || 'Error al obtener cascos', 500)
     }
   }
 
-  async available({ response, user }: HttpContext) {
+  async available(ctx: HttpContext) {
     try {
-      if (!user?.isSupervisor()) {
-        return response.status(403).json({
-          success: false,
-          message: 'Solo los supervisores pueden ver cascos disponibles',
-          data: null,
-        })
-      }
+      const user = requireUser(ctx)
+      if (!user) return
 
       const cascos = await this.cascoService.getAvailableCascos(user.id)
-
-      return response.status(200).json({
-        success: true,
-        message: 'Cascos disponibles obtenidos exitosamente',
-        data: cascos,
-      })
+      return jsonSuccess(ctx.response, 'Cascos disponibles obtenidos exitosamente', cascos)
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_AVAILABLE')
-      return ErrorHandler.handleError(error, response, 'Error al obtener cascos disponibles', 500)
+      return jsonError(ctx.response, error.message || 'Error al obtener cascos disponibles', 500)
     }
   }
 
-  async assign({ request, response, user }: HttpContext) {
+  async assign(ctx: HttpContext) {
     try {
-      if (!user?.isSupervisor()) {
-        return response.status(403).json({
-          success: false,
-          message: 'Solo los supervisores pueden asignar cascos',
-          data: null,
-        })
-      }
+      const user = requireUser(ctx)
+      if (!user) return
 
-      const payload = await request.validateUsing(assignCascoValidator)
-      const assignData = {
-        ...payload,
-        supervisorId: user.id,
-      }
+      const payload = await ctx.request.validateUsing(assignCascoValidator)
+      const assignData = { ...payload, supervisorId: user.id }
       await this.cascoService.assignCasco(assignData)
-
-      return response.status(200).json({
-        success: true,
-        message: 'Casco asignado exitosamente',
-        data: null,
-      })
+      return jsonSuccess(ctx.response, 'Casco asignado exitosamente')
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_ASSIGN')
-      return ErrorHandler.handleError(error, response, 'Error al asignar casco', 400)
+      return jsonError(ctx.response, error.message || 'Error al asignar casco', 400)
     }
   }
 
-  async unassign({ request, response, user }: HttpContext) {
+  async unassign(ctx: HttpContext) {
     try {
-      if (!user?.isSupervisor()) {
-        return response.status(403).json({
-          success: false,
-          message: 'Solo los supervisores pueden desasignar cascos',
-          data: null,
-        })
-      }
+      const user = requireUser(ctx)
+      if (!user) return
 
-      const cascoId = request.input('cascoId')
-      const unassignData = {
-        cascoId,
-        supervisorId: user.id,
-      }
+      const cascoId = ctx.request.input('cascoId')
+      const unassignData = { cascoId, supervisorId: user.id }
       await this.cascoService.unassignCasco(unassignData)
-
-      return response.status(200).json({
-        success: true,
-        message: 'Casco desasignado exitosamente',
-        data: null,
-      })
+      return jsonSuccess(ctx.response, 'Casco desasignado exitosamente')
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_UNASSIGN')
-      return ErrorHandler.handleError(error, response, 'Error al desasignar casco', 400)
+      return jsonError(ctx.response, error.message || 'Error al desasignar casco', 400)
     }
   }
+  /*
+  async store(ctx: HttpContext) {
+    // dani hace esto
+  }
+  */
 }

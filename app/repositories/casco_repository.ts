@@ -1,6 +1,12 @@
 import Casco from '#models/casco'
+import { CreateCascoDto } from '#dtos/casco'
 
 export class CascoRepository {
+  /*
+  async create(data: CreateCascoDto) {
+
+  }
+  */
   async findById(id: string): Promise<Casco | null> {
     return await Casco.find(id)
   }
@@ -11,20 +17,23 @@ export class CascoRepository {
 
   async findBySupervisorId(supervisorId: string): Promise<Casco[]> {
     return Casco.query()
-        .where('supervisor_id', supervisorId)
-        .preload('minero')
-        .orderBy('created_at', 'desc')
+      .where('supervisor_id', supervisorId)
+      .preload('minero')
+      .orderBy('created_at', 'desc')
   }
 
   async findAvailableBySupervisor(supervisorId: string): Promise<Casco[]> {
     return Casco.query()
-        .where('supervisor_id', supervisorId)
-        .where('is_active', true)
-        .whereNull('minero_id')
+      .where('supervisor_id', supervisorId)
+      .where('is_active', true)
+      .whereNull('minero_id')
   }
 
   // Método actualizado: ya no crea casco, sino que vincula uno existente al supervisor
-  async activateCascoForSupervisor(supervisorId: string, physicalId: string): Promise<Casco | null> {
+  async activateCascoForSupervisor(
+    supervisorId: string,
+    physicalId: string
+  ): Promise<Casco | null> {
     // Buscar el casco por su ID físico
     const casco = await this.findByPhysicalId(physicalId)
     if (!casco) return null

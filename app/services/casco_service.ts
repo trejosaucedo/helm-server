@@ -2,10 +2,11 @@ import { CascoRepository } from '#repositories/casco_repository'
 import { UserRepository } from '#repositories/user_repository'
 import type {
   ActivateCascoDto,
-  CascoResponseDto,
   AssignCascoDto,
-  UnassignCascoDto,
+  CascoResponseDto,
+  CreateCascoDto,
   DesactivateCascoDto,
+  UnassignCascoDto,
 } from '#dtos/casco'
 
 export class CascoService {
@@ -16,6 +17,11 @@ export class CascoService {
     this.cascoRepository = new CascoRepository()
     this.userRepository = new UserRepository()
   }
+  /*
+  async createCasco(data: CreateCascoDto) {
+    // dani hace esto
+  }
+ */
 
   async activateCasco(data: ActivateCascoDto): Promise<CascoResponseDto> {
     // Verificar que el casco existe en el sistema

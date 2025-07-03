@@ -22,10 +22,12 @@ router
   .group(() => {
     router.post('/activate', '#controllers/casco_controller.activate')
     router.post('/deactivate', '#controllers/casco_controller.desactivate')
-    router.get('/', '#controllers/casco_controller.index')
+    router.get('/my-helmets', '#controllers/casco_controller.myHelmets')
     router.get('/available', '#controllers/casco_controller.available')
     router.post('/assign', '#controllers/casco_controller.assign')
     router.post('/unassign', '#controllers/casco_controller.unassign')
   })
   .prefix('/cascos')
   .use(middleware.auth('supervisor'))
+
+router.post('/cascos/', '#controllers/casco_controller.store').use(middleware.auth('admin'))

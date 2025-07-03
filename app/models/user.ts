@@ -23,7 +23,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
   declare email: string
 
   @column()
-  declare role: 'supervisor' | 'minero'
+  declare role: 'supervisor' | 'minero' | 'admin'
 
   @column()
   declare cascoId: string | null
