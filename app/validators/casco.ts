@@ -12,3 +12,10 @@ export const assignCascoValidator = vine.compile(
     mineroId: vine.string().trim(),
   })
 )
+
+export const createCascoValidator = vine.compile(
+  vine.object({
+    physicalId: vine.string().trim(),
+    supervisorId: vine.string().trim().optional(),
+  })
+)

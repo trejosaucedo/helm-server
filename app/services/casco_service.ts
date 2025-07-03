@@ -17,11 +17,11 @@ export class CascoService {
     this.cascoRepository = new CascoRepository()
     this.userRepository = new UserRepository()
   }
-  /*
-  async createCasco(data: CreateCascoDto) {
-    // dani hace esto
+
+  async createCascoAdmin(data: CreateCascoDto): Promise<CascoResponseDto> {
+    const casco = await this.cascoRepository.createCasco(data)
+    return this.mapCascoToResponse(casco)
   }
- */
 
   async activateCasco(data: ActivateCascoDto): Promise<CascoResponseDto> {
     // Verificar que el casco existe en el sistema

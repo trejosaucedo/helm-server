@@ -36,6 +36,6 @@ export interface CascoResponseDto {
 }
 
 export interface CreateCascoDto {
-  physicalId: string
   supervisorId?: string
+  physicalId: string
 }

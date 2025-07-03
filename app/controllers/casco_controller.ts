@@ -1,6 +1,10 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { CascoService } from '#services/casco_service'
-import { activateCascoValidator, assignCascoValidator } from '#validators/casco'
+import {
+  activateCascoValidator,
+  assignCascoValidator,
+  createCascoValidator,
+} from '#validators/casco'
 import { ErrorHandler } from '#utils/error_handler'
 
 // Helpers
@@ -140,9 +144,23 @@ export default class CascoController {
       return jsonError(ctx.response, error.message || 'Error al desasignar casco', 400)
     }
   }
-  /*
-  async store(ctx: HttpContext) {
-    // dani hace esto
+
+  async create({ request, response }: HttpContext) {
+    try {
+      const payload = await request.validateUsing(createCascoValidator)
+      const newCasco = await this.cascoService.createCascoAdmin({
+        supervisorId: payload.supervisorId,
+        physicalId: payload.physicalId,
+      })
+
+      return response.created({
+        success: true,
+        message: 'Casco creado exitosamente',
+        data: newCasco,
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'CASCO_CREATE')
+      return ErrorHandler.handleError(error, response, 'Error al crear casco', 400)
+    }
   }
-  */
 }

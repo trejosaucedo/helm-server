@@ -30,4 +30,4 @@ router
   .prefix('/cascos')
   .use(middleware.auth('supervisor'))
 
-router.post('/cascos/', '#controllers/casco_controller.store').use(middleware.auth('admin'))
+router.post('/cascos/', '#controllers/casco_controller.create').use(middleware.auth('admin'))

@@ -91,4 +91,12 @@ export class CascoRepository {
     const casco = await this.findByPhysicalId(physicalId)
     return casco !== null
   }
+
+  async createCasco(data: CreateCascoDto): Promise<Casco> {
+    return await Casco.create({
+      physicalId: data.physicalId,
+      supervisorId: data.supervisorId ?? null,
+      isActive: true,
+    })
+  }
 }

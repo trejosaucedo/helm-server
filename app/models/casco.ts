@@ -12,7 +12,7 @@ export default class Casco extends BaseModel {
   declare physicalId: string
 
   @column()
-  declare supervisorId: string
+  declare supervisorId: string | null
 
   @column()
   declare mineroId: string | null
