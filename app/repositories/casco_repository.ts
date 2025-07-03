@@ -1,6 +1,12 @@
 import Casco from '#models/casco'
+import { CreateCascoDto } from '#dtos/casco'
 
 export class CascoRepository {
+  /*
+  async create(data: CreateCascoDto) {
+
+  }
+  */
   async findById(id: string): Promise<Casco | null> {
     return await Casco.find(id)
   }
@@ -23,12 +29,26 @@ export class CascoRepository {
       .whereNull('minero_id')
   }
 
-  async createCasco(supervisorId: string, physicalId: string): Promise<Casco> {
-    return await Casco.create({
-      physicalId,
-      supervisorId,
-      isActive: true,
-    })
+  // Método actualizado: ya no crea casco, sino que vincula uno existente al supervisor
+  async activateCascoForSupervisor(
+    supervisorId: string,
+    physicalId: string
+  ): Promise<Casco | null> {
+    // Buscar el casco por su ID físico
+    const casco = await this.findByPhysicalId(physicalId)
+    if (!casco) return null
+
+    // Verificar que el casco no esté ya vinculado a otro supervisor
+    if (casco.supervisorId) {
+      throw new Error('Este casco ya está vinculado a otro supervisor')
+    }
+
+    // Vincular el casco al supervisor y activarlo
+    casco.supervisorId = supervisorId
+    casco.isActive = true
+    await casco.save()
+
+    return casco
   }
 
   async assignToMinero(cascoId: string, mineroId: string): Promise<Casco | null> {
@@ -59,8 +79,16 @@ export class CascoRepository {
     return casco
   }
 
-  async isPhysicalIdAvailable(physicalId: string): Promise<boolean> {
+  // Método actualizado: verifica que el casco exista y no esté vinculado a ningún supervisor
+  async isPhysicalIdAvailableForActivation(physicalId: string): Promise<boolean> {
     const casco = await this.findByPhysicalId(physicalId)
-    return casco === null
+    // El casco debe existir pero no estar vinculado a ningún supervisor
+    return casco !== null && casco.supervisorId === null
+  }
+
+  // Método para verificar si un casco físico existe en el sistema
+  async cascoExistsByPhysicalId(physicalId: string): Promise<boolean> {
+    const casco = await this.findByPhysicalId(physicalId)
+    return casco !== null
   }
 }

@@ -1,10 +1,22 @@
 export interface ActivateCascoDto {
   physicalId: string
+  supervisorId: string
 }
 
 export interface AssignCascoDto {
   cascoId: string
   mineroId: string
+  supervisorId: string
+}
+
+export interface UnassignCascoDto {
+  cascoId: string
+  supervisorId: string
+}
+
+export interface DesactivateCascoDto {
+  cascoId: string
+  supervisorId: string
 }
 
 export interface CreateCascoDto {
@@ -28,8 +40,4 @@ export interface CascoResponseDto {
   }
 }
 
-export interface CreateMineroDto {
-  fullName: string
-  email: string
-  cascoId: string
-}
+

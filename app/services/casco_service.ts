@@ -1,6 +1,6 @@
 import { CascoRepository } from '#repositories/casco_repository'
 import { UserRepository } from '#repositories/user_repository'
-import type { ActivateCascoDto, CascoResponseDto} from '#dtos/casco'
+import type { ActivateCascoDto, CascoResponseDto } from '#dtos/casco'
 
 export class CascoService {
   private cascoRepository: CascoRepository
@@ -9,17 +9,6 @@ export class CascoService {
   constructor() {
     this.cascoRepository = new CascoRepository()
     this.userRepository = new UserRepository()
-  }
-
-   public async createCascoAdmin(
-    supervisorId: string,
-    physicalId: string
-  ): Promise<CascoResponseDto> {
-    const casco = await this.cascoRepository.createCasco(
-      supervisorId,
-      physicalId
-    )
-    return this.mapCascoToResponse(casco)
   }
 
   async activateCasco(supervisorId: string, data: ActivateCascoDto): Promise<CascoResponseDto> {

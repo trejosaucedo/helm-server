@@ -6,9 +6,9 @@ import {
   changePasswordValidator,
 } from '#validators/auth'                        
 import { AuthService } from '#services/auth_service'
-import { TokenUtils } from '#utils/token_utils'
 import { ErrorHandler } from '#utils/error_handler'
-import User from '#models/user'
+import { TokenUtils } from '#utils/token_utils'
+import { withUser, withSession } from '#utils/controller_helpers'
 
 export default class AuthController {
   private authService: AuthService
@@ -17,73 +17,15 @@ export default class AuthController {
     this.authService = new AuthService()
   }
 
-  async register({ request, response }: HttpContext) {
-    try {
-      const payload = await request.validateUsing(registerSupervisorValidator)
-      const result = await this.authService.register(payload)
-
-      return response.status(201).json({
-        success: true,
-        message: 'Usuario registrado exitosamente',
-        data: result,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'AUTH_REGISTER')
-      return ErrorHandler.handleError(error, response, 'Error al registrar usuario', 400)
-    }
-  }
-
-  async registerMinero({ request, response }: HttpContext) {
-    try {
-      const token = TokenUtils.extractFromRequest(request)
-      if (!token) {
-        return response.status(401).json({
-          success: false,
-          message: 'Token requerido',
-          data: null,
-        })
-      }
-
-      const validation = await User.validateToken(token)
-      if (!validation) {
-        return response.status(401).json({
-          success: false,
-          message: 'Token inválido',
-          data: null,
-        })
-      }
-
-      if (!validation.user.isSupervisor()) {
-        return response.status(403).json({
-          success: false,
-          message: 'Solo los supervisores pueden registrar mineros',
-          data: null,
-        })
-      }
-
-      const payload = await request.validateUsing(registerMineroValidator)
-      const result = await this.authService.registerMinero(payload, validation.user.id)
-
-      return response.status(201).json({
-        success: true,
-        message: 'Minero registrado exitosamente',
-        data: result,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'AUTH_REGISTER_MINER')
-      return ErrorHandler.handleError(error, response, 'Error al registrar minero', 400)
-    }
-  }
-
+  // Login y registro sí necesitan lógica propia
   async login({ request, response }: HttpContext) {
     try {
       const payload = await request.validateUsing(loginValidator)
       const result = await this.authService.login(payload)
-
-      return response.status(200).json({
-        success: true,
-        message: 'Login exitoso',
-        data: result,
+      TokenUtils.setAuthCookies(response, result.sessionId, result.accessToken)
+      return TokenUtils.successResponse(response, 'Login exitoso', {
+        user: result.user,
+        accessToken: result.accessToken,
       })
     } catch (error) {
       ErrorHandler.logError(error, 'AUTH_LOGIN')
@@ -91,152 +33,97 @@ export default class AuthController {
     }
   }
 
-  async logout({ request, response }: HttpContext) {
+  async register({ request, response }: HttpContext) {
     try {
-      const token = TokenUtils.extractFromRequest(request)
-
-      if (!token) {
-        return response.status(401).json({
-          success: false,
-          message: 'Token requerido',
-          data: null,
-        })
-      }
-
-      const validation = await User.validateToken(token)
-
-      if (!validation) {
-        return response.status(401).json({
-          success: false,
-          message: 'Token inválido',
-          data: null,
-        })
-      }
-
-      await this.authService.logout(token, validation.user)
-
-      return response.status(200).json({
-        success: true,
-        message: 'Logout exitoso',
-        data: null,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'AUTH_LOGOUT')
-      return ErrorHandler.handleError(error, response, 'Error al cerrar sesión', 500)
-    }
-  }
-
-  async logoutAll({ request, response }: HttpContext) {
-    try {
-      const token = TokenUtils.extractFromRequest(request)
-
-      if (!token) {
-        return response.status(401).json({
-          success: false,
-          message: 'Token requerido',
-          data: null,
-        })
-      }
-
-      const validation = await User.validateToken(token)
-
-      if (!validation) {
-        return response.status(401).json({
-          success: false,
-          message: 'Token inválido',
-          data: null,
-        })
-      }
-
-      await this.authService.logoutAll(validation.user)
-
-      return response.status(200).json({
-        success: true,
-        message: 'Todas las sesiones cerradas exitosamente',
-        data: null,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'AUTH_LOGOUT_ALL')
-      return ErrorHandler.handleError(error, response, 'Error al cerrar sesiones', 500)
-    }
-  }
-
-  async me({ request, response }: HttpContext) {
-    try {
-      const token = TokenUtils.extractFromRequest(request)
-
-      if (!token) {
-        return response.status(401).json({
-          success: false,
-          message: 'Token requerido',
-          data: null,
-        })
-      }
-
-      const validation = await User.validateToken(token)
-
-      if (!validation) {
-        return response.status(401).json({
-          success: false,
-          message: 'Token inválido',
-          data: null,
-        })
-      }
-
-      const user = validation.user
-
-      return response.status(200).json({
-        success: true,
-        message: 'Usuario obtenido exitosamente',
-        data: {
-          id: user.id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role,
-          cascoId: user.cascoId,
-          createdAt: user.createdAt.toISO(),
-          updatedAt: user.updatedAt?.toISO() || null,
+      const payload = await request.validateUsing(registerSupervisorValidator)
+      const ipAddress = request.ip()
+      const userAgent = request.header('User-Agent')
+      const deviceInfo = this.extractDeviceInfo(request)
+      const result = await this.authService.register(payload, deviceInfo, ipAddress, userAgent)
+      TokenUtils.setAuthCookies(response, result.sessionId, result.accessToken)
+      return TokenUtils.successResponse(
+        response,
+        'Usuario registrado exitosamente',
+        {
+          user: result.user,
+          accessToken: result.accessToken,
         },
-      })
+        201
+      )
     } catch (error) {
-      ErrorHandler.logError(error, 'AUTH_ME')
-      return ErrorHandler.handleError(error, response, 'Error al obtener usuario', 500)
+      ErrorHandler.logError(error, 'AUTH_REGISTER')
+      return ErrorHandler.handleError(error, response, 'Error al registrar usuario', 400)
     }
   }
 
-  async changePassword({ request, response }: HttpContext) {
-    try {
-      const token = TokenUtils.extractFromRequest(request)
+  // Métodos ultra cortos usando helpers DRY
 
-      if (!token) {
-        return response.status(401).json({
-          success: false,
-          message: 'Token requerido',
-          data: null,
-        })
-      }
+  me = withUser(async (user, { response }) => {
+    return TokenUtils.successResponse(
+      response,
+      'Usuario obtenido exitosamente',
+      TokenUtils.formatUserData(user)
+    )
+  })
 
-      const validation = await User.validateToken(token)
+  changePassword = withUser(async (user, { request, response }) => {
+    const payload = await request.validateUsing(changePasswordValidator)
+    await this.authService.changePassword(user, payload)
+    return TokenUtils.successResponse(response, 'Contraseña cambiada exitosamente')
+  })
 
-      if (!validation) {
-        return response.status(401).json({
-          success: false,
-          message: 'Token inválido',
-          data: null,
-        })
-      }
+  getSessions = withUser(async (user, { response }) => {
+    const sessions = await this.authService.getActiveSessions(user.id)
+    return TokenUtils.successResponse(response, 'Sesiones obtenidas exitosamente', sessions)
+  })
 
-      const payload = await request.validateUsing(changePasswordValidator)
-      await this.authService.changePassword(validation.user, payload)
+  revokeSession = withUser(async (user, { request, response }) => {
+    const sessionIdToRevoke = request.param('sessionId')
+    await this.authService.revokeSession(user.id, sessionIdToRevoke)
+    return TokenUtils.successResponse(response, 'Sesión revocada exitosamente')
+  })
 
-      return response.status(200).json({
-        success: true,
-        message: 'Contraseña cambiada exitosamente',
-        data: null,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'AUTH_CHANGE_PASSWORD')
-      return ErrorHandler.handleError(error, response, 'Error al cambiar contraseña', 400)
+  registerMinero = withUser(async (user, { request, response }) => {
+    const payload = await request.validateUsing(registerMineroValidator)
+    const result = await this.authService.registerMinero(payload, user.id)
+    return TokenUtils.successResponse(response, 'Minero registrado exitosamente', result, 201)
+  })
+
+  refresh = withSession(async (user, sessionId, { response }) => {
+    const newAccessToken = await this.authService.refreshToken(sessionId)
+    if (!newAccessToken) {
+      TokenUtils.clearAuthCookies(response)
+      return TokenUtils.unauthorizedResponse(response, 'Sesión inválida o expirada')
     }
+    TokenUtils.setAccessTokenCookie(response, newAccessToken)
+    return TokenUtils.successResponse(response, 'Token renovado exitosamente', {
+      user: TokenUtils.formatUserData(user),
+      accessToken: newAccessToken,
+    })
+  })
+
+  logout = withSession(async (user, sessionId, { response }) => {
+    await this.authService.logout(sessionId, user.id)
+    TokenUtils.clearAuthCookies(response)
+    return TokenUtils.successResponse(response, 'Logout exitoso')
+  })
+
+  logoutAll = withSession(async (user, _sessionId, { response }) => {
+    await this.authService.logoutAll(user.id)
+    TokenUtils.clearAuthCookies(response)
+    return TokenUtils.successResponse(response, 'Todas las sesiones cerradas exitosamente')
+  })
+
+  private extractDeviceInfo(request: HttpContext['request']): string {
+    const deviceData = {
+      userAgent: request.header('User-Agent'),
+      acceptLanguage: request.header('Accept-Language'),
+      acceptEncoding: request.header('Accept-Encoding'),
+      connection: request.header('Connection'),
+      secFetchSite: request.header('Sec-Fetch-Site'),
+      secFetchMode: request.header('Sec-Fetch-Mode'),
+      timestamp: new Date().toISOString(),
+    }
+    return JSON.stringify(deviceData)
   }
 }

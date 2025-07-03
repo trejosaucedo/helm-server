@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { CascoService } from '#services/casco_service'
-import { activateCascoValidator, assignCascoValidator, createCascoValidator } from '#validators/casco'
+import { activateCascoValidator, assignCascoValidator } from '#validators/casco'
 import { ErrorHandler } from '#utils/error_handler'
 
 export default class CascoController {
@@ -9,38 +9,6 @@ export default class CascoController {
   constructor() {
     this.cascoService = new CascoService()
   }                    
-
-   public async create({ request, response, user }: HttpContext) {
-    try {
-      if (!user?.isAdmin()) {
-        return response.forbidden({
-          success: false,
-          message: 'Se requiere permiso de administrador',
-          data: null,
-        })
-      }
-
-      const payload = await request.validateUsing(createCascoValidator)
-      const newCasco = await this.cascoService.createCascoAdmin(
-        payload.supervisorId,
-        payload.physicalId
-      )
-
-      return response.created({
-        success: true,
-        message: 'Casco creado exitosamente',
-        data: newCasco,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'CASCO_CREATE')
-      return ErrorHandler.handleError(
-        error,
-        response,
-        'Error al crear casco',
-        400
-      )
-    }
-  }
 
   async activate({ request, response, user }: HttpContext) {
     try {

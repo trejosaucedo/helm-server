@@ -11,6 +11,7 @@ export interface UpdateSupervisorData {
   email?: string
 }
 
+
 export interface UserData {
   id: string
   fullName: string | null
@@ -20,3 +21,4 @@ export interface UserData {
   createdAt: Date
   updatedAt: Date | null
 }
+

@@ -1,33 +1,48 @@
-// app/middleware/auth_middleware.ts
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { TokenUtils } from '#utils/token_utils'
-import User from '#models/user'
+import { SessionService } from '#services/session_service'
 
 export default class AuthMiddleware {
-  async handle(ctx: HttpContext, next: NextFn) {
+  public async handle(ctx: HttpContext, next: NextFn, guards?: string | string[]) {
+    // 1. Validación de token
     const token = TokenUtils.extractFromContext(ctx)
+    let validation = token ? await SessionService.validateAccessToken(token) : null
 
-    if (!token) {
-      return ctx.response.status(401).json({
-        success: false,
-        message: 'Token de autenticación requerido',
-        data: null,
-      })
+    // 2. Intentar refresh si no es válido
+    if (!validation) {
+      const sessionId = TokenUtils.getSessionIdFromCookies(ctx.request)
+      if (sessionId && (await SessionService.sessionExists(sessionId))) {
+        const newAccessToken = await SessionService.refreshAccessToken(sessionId)
+        if (newAccessToken) {
+          TokenUtils.setAccessTokenCookie(ctx.response, newAccessToken)
+          validation = await SessionService.validateAccessToken(newAccessToken)
+        }
+      }
     }
-
-    const validation = await User.validateToken(token)
 
     if (!validation) {
-      return ctx.response.status(401).json({
-        success: false,
-        message: 'Token inválido o expirado',
-        data: null,
-      })
+      return TokenUtils.unauthorizedResponse(ctx.response, 'Token inválido o expirado')
     }
 
-    // Agregar user y tokenData al contexto para uso posterior
-    ctx.user = validation.user
+    const user = validation.user
+
+    // --- AUTORIZACIÓN POR ROL ---
+    let allowedRoles: string[] = []
+
+    if (guards) {
+      if (typeof guards === 'string') {
+        allowedRoles = [guards]
+      } else if (Array.isArray(guards)) {
+        allowedRoles = guards
+      }
+    }
+
+    if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+      return TokenUtils.forbiddenResponse(ctx.response, 'No tienes acceso a esta sección')
+    }
+
+    ctx.user = user
     ctx.tokenData = validation.tokenData
 
     return next()
