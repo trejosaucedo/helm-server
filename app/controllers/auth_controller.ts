@@ -4,7 +4,7 @@ import {
   loginValidator,
   registerMineroValidator,
   changePasswordValidator,
-} from '#validators/auth'
+} from '#validators/auth'                        
 import { AuthService } from '#services/auth_service'
 import { ErrorHandler } from '#utils/error_handler'
 import { TokenUtils } from '#utils/token_utils'
