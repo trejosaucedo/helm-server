@@ -46,12 +46,4 @@ export default class User extends compose(BaseModel, AuthFinder) {
       user.id = randomUUID()
     }
   }
-
-  isSupervisor(): boolean {
-    return this.role === 'supervisor'
-  }
-
-  isMinero(): boolean {
-    return this.role === 'minero'
-  }
 }

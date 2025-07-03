@@ -84,12 +84,6 @@ export default class AuthController {
   })
 
   registerMinero = withUser(async (user, { request, response }) => {
-    if (!user.isSupervisor()) {
-      return TokenUtils.forbiddenResponse(
-        response,
-        'Solo los supervisores pueden registrar mineros'
-      )
-    }
     const payload = await request.validateUsing(registerMineroValidator)
     const result = await this.authService.registerMinero(payload, user.id)
     return TokenUtils.successResponse(response, 'Minero registrado exitosamente', result, 201)
