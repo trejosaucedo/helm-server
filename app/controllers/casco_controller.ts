@@ -21,7 +21,12 @@ export default class CascoController {
       }
 
       const payload = await request.validateUsing(activateCascoValidator)
-      const result = await this.cascoService.activateCasco(user.id, payload)
+      const activationData = {
+        ...payload,
+        supervisorId: user.id,
+      }
+
+      const result = await this.cascoService.activateCasco(activationData)
 
       return response.status(201).json({
         success: true,
@@ -45,7 +50,11 @@ export default class CascoController {
       }
 
       const cascoId = request.input('cascoId')
-      await this.cascoService.deactivateCasco(cascoId, user.id)
+      const desactivationData = {
+        cascoId,
+        supervisorId: user.id,
+      }
+      await this.cascoService.deactivateCasco(desactivationData)
 
       return response.status(200).json({
         success: true,
@@ -115,7 +124,11 @@ export default class CascoController {
       }
 
       const payload = await request.validateUsing(assignCascoValidator)
-      await this.cascoService.assignCasco(payload.cascoId, payload.mineroId, user.id)
+      const assignData = {
+        ...payload,
+        supervisorId: user.id,
+      }
+      await this.cascoService.assignCasco(assignData)
 
       return response.status(200).json({
         success: true,
@@ -139,7 +152,11 @@ export default class CascoController {
       }
 
       const cascoId = request.input('cascoId')
-      await this.cascoService.unassignCasco(cascoId, user.id)
+      const unassignData = {
+        cascoId,
+        supervisorId: user.id,
+      }
+      await this.cascoService.unassignCasco(unassignData)
 
       return response.status(200).json({
         success: true,

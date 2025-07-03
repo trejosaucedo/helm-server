@@ -1,7 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 
 export class TokenUtils {
-  // Configuración base para cookies seguras
   private static getBaseCookieOptions() {
     return {
       httpOnly: true,
@@ -10,45 +9,38 @@ export class TokenUtils {
     }
   }
 
-  // Configurar cookie de sesión
   static setSessionCookie(response: HttpContext['response'], sessionId: string) {
     response.cookie('sessionId', sessionId, {
       ...this.getBaseCookieOptions(),
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     })
   }
 
-  // Configurar cookie de access token
   static setAccessTokenCookie(response: HttpContext['response'], accessToken: string) {
     response.cookie('accessToken', accessToken, {
       ...this.getBaseCookieOptions(),
-      maxAge: 15 * 60 * 1000, // 15 minutos
+      maxAge: 15 * 60 * 1000,
     })
   }
 
-  // Configurar ambas cookies de autenticación
   static setAuthCookies(response: HttpContext['response'], sessionId: string, accessToken: string) {
     this.setSessionCookie(response, sessionId)
     this.setAccessTokenCookie(response, accessToken)
   }
 
-  // Limpiar todas las cookies de autenticación
   static clearAuthCookies(response: HttpContext['response']) {
     response.clearCookie('sessionId')
     response.clearCookie('accessToken')
   }
 
-  // Obtener access token de las cookies
   static getAccessTokenFromCookies(request: HttpContext['request']): string | undefined {
     return request.cookie('accessToken')
   }
 
-  // Obtener session ID de las cookies
   static getSessionIdFromCookies(request: HttpContext['request']): string | undefined {
     return request.cookie('sessionId')
   }
 
-  // Validar que existe access token en cookies
   static validateAccessTokenPresence(request: HttpContext['request']): {
     isValid: boolean
     token?: string
@@ -60,7 +52,6 @@ export class TokenUtils {
     }
   }
 
-  // Validar que existe session ID en cookies
   static validateSessionIdPresence(request: HttpContext['request']): {
     isValid: boolean
     sessionId?: string
@@ -72,7 +63,6 @@ export class TokenUtils {
     }
   }
 
-  // Formatear datos del usuario para respuesta
   static formatUserData(user: any) {
     return {
       id: user.id,
@@ -85,7 +75,6 @@ export class TokenUtils {
     }
   }
 
-  // Respuestas de error estándar para autenticación
   static unauthorizedResponse(
     response: HttpContext['response'],
     message: string = 'Token requerido'
@@ -105,7 +94,6 @@ export class TokenUtils {
     })
   }
 
-  // Respuesta de éxito estándar
   static successResponse(
     response: HttpContext['response'],
     message: string,
@@ -119,25 +107,21 @@ export class TokenUtils {
     })
   }
 
-  // Formatear respuesta de autenticación con token
   static formatAuthResponse(user: any, token: any) {
     return {
       user: this.formatUserData(user),
-      accessToken: token.accessToken || token.token, // Compatibilidad con ambos formatos
+      accessToken: token.accessToken || token.token,
       sessionId: token.sessionId,
     }
   }
 
   static extractFromContext(ctx: HttpContext): string | undefined {
     const token = ctx.request.cookie('accessToken')
-
     if (token) return token
-
     const authHeader = ctx.request.header('Authorization')
     if (authHeader?.startsWith('Bearer ')) {
       return authHeader.slice(7)
     }
-
     return undefined
   }
 }

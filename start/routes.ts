@@ -28,4 +28,4 @@ router
     router.post('/unassign', '#controllers/casco_controller.unassign')
   })
   .prefix('/cascos')
-  .use(middleware.auth())
+  .use(middleware.auth('supervisor'))

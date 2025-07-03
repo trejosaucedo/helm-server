@@ -7,7 +7,7 @@ export interface RegisterSupervisorDto {
 export interface RegisterMineroDto {
   fullName: string
   email: string
-  cascoId: string // ID del casco que se le asignará
+  cascoId: string
 }
 
 export interface LoginDto {
@@ -20,51 +20,14 @@ export interface ChangePasswordDto {
   newPassword: string
 }
 
-export interface AuthResponseDto {
-  user: {
-    id: string
-    fullName: string | null
-    email: string
-    role: 'supervisor' | 'minero'
-    cascoId?: string | null
-    createdAt: string
-    updatedAt: string | null
-  }
-  accessToken: string
-  refreshToken: string
-  sessionId: string
-}
-
-export interface RefreshTokenResponseDto {
-  accessToken: string
-  user: {
-    id: string
-    fullName: string | null
-    email: string
-    role: 'supervisor' | 'minero'
-    cascoId?: string | null
-    createdAt: string
-    updatedAt: string | null
-  }
-}
-
-export interface AuthTokenPair {
-  accessToken: string
-  refreshToken: string
-}
-
 export interface UserResponseDto {
   id: string
   fullName: string | null
   email: string
-  role: 'supervisor' | 'minero'
+  role: 'supervisor' | 'minero' | 'admin'
   cascoId?: string | null
   createdAt: string
   updatedAt: string | null
-}
-
-export interface MineroRegistrationResponseDto {
-  user: UserResponseDto
-  temporaryPassword: string
-  message: string
+  temporaryPassword?: string
+  message?: string
 }
