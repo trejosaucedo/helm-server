@@ -20,7 +20,6 @@ router
 
 router
   .group(() => {
-    router.post('/', '#controllers/casco_controller.create').middleware([middleware.isAdmin()])
     router.post('/activate', '#controllers/casco_controller.activate')
     router.post('/deactivate', '#controllers/casco_controller.desactivate')
     router.get('/my-helmets', '#controllers/casco_controller.myHelmets')
