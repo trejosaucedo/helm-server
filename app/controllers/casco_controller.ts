@@ -1,10 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { CascoService } from '#services/casco_service'
-import {
-  activateCascoValidator,
-  assignCascoValidator,
-  createCascoValidator,
-} from '#validators/casco'
+import {activateCascoValidator,assignCascoValidator,createCascoValidator,} from '#validators/casco'
 import { ErrorHandler } from '#utils/error_handler'
 
 // Helpers
