@@ -1,6 +1,5 @@
 import User from '#models/user'
-import { UpdateMineroData, UpdateSupervisorData } from '#types/user'
-import { RegisterMineroDto, RegisterSupervisorDto } from '#dtos/user.dto'
+import { RegisterMineroDto, RegisterSupervisorDto, UpdateSupervisorDto, UpdateMineroDto} from '#dtos/user.dto'
 
 export class UserRepository {
   async findByEmail(email: string): Promise<User | null> {
@@ -15,7 +14,7 @@ export class UserRepository {
     return await User.findBy('casco_id', cascoId)
   }
 
-  async updateMinero(data: UpdateMineroData): Promise<User | null> {
+  async updateMinero(data: UpdateMineroDto): Promise<User | null> {
     const user = await this.findById(data.id)
     if (!user) {
       return null
@@ -29,7 +28,7 @@ export class UserRepository {
     return user
   }
 
-  async update(data: UpdateSupervisorData): Promise<User | null> {
+  async update(data: UpdateSupervisorDto): Promise<User | null> {
     const user = await this.findById(data.id)
     if (!user) {
       return null

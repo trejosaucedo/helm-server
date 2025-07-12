@@ -1,10 +1,17 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, column, beforeCreate, beforeSave, hasMany } from '@adonisjs/lucid/orm'
+import {
+  BaseModel,
+  column,
+  beforeCreate,
+  beforeSave,
+  hasMany,
+  belongsTo,
+} from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { randomUUID } from 'node:crypto'
-import type { HasMany } from '@adonisjs/lucid/types/relations'
+import type { HasMany, BelongsTo } from '@adonisjs/lucid/types/relations'
 import Casco from './casco.js'
 import TeamMiner from './team_miner.js'
 import Notification from './notification.js'
@@ -34,7 +41,13 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column()
   declare estado: 'activo' | 'inactivo'
 
-  // ---- CAMPOS SOLO PARA MINERO (null en admin/supervisor) ----
+  // ---- CAMPOS SOLO PARA MINERO ----
+  @column()
+  declare cascoId: string | null
+
+  @column()
+  declare supervisorId: string | null
+
   @column.dateTime()
   declare fechaContratacion: DateTime | null
 
@@ -44,13 +57,25 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column()
   declare genero: 'masculino' | 'femenino' | null
 
-  // Relación: un supervisor tiene muchos cascos
+  // Un supervisor tiene muchos cascos
   @hasMany(() => Casco, {
     foreignKey: 'supervisorId',
   })
   declare cascos: HasMany<typeof Casco>
 
-  // Relación: historial de equipos como minero
+  // Un supervisor tiene muchos mineros
+  @hasMany(() => User, {
+    foreignKey: 'supervisorId',
+  })
+  declare mineros: HasMany<typeof User>
+
+  // Un minero pertenece a un supervisor
+  @belongsTo(() => User, {
+    foreignKey: 'supervisorId',
+  })
+  declare supervisor: BelongsTo<typeof User>
+
+  // Historial de equipos como minero
   @hasMany(() => TeamMiner, {
     foreignKey: 'mineroId',
   })

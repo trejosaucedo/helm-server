@@ -7,6 +7,8 @@ export interface RegisterSupervisorDto {
 export interface RegisterMineroDto {
   fullName: string
   email: string
+  cascoId?: string
+  supervisorId?: string
   fechaContratacion?: string
   especialidadEnMineria?: string
   genero?: 'masculino' | 'femenino'
@@ -22,6 +24,24 @@ export interface ChangePasswordDto {
   newPassword: string
 }
 
+export interface UpdateMineroDto {
+  id: string
+  fullName?: string
+  email?: string
+  cascoId?: string | null
+  supervisorId?: string | null
+  fechaContratacion?: string | null
+  especialidadEnMineria?: string | null
+  genero?: 'masculino' | 'femenino' | null
+}
+
+export interface UpdateSupervisorDto {
+  id: string
+  fullName?: string
+  email?: string
+}
+
+
 export interface UserResponseDto {
   id: string
   fullName: string | null
@@ -31,6 +51,8 @@ export interface UserResponseDto {
   fechaContratacion?: string | null
   especialidadEnMineria?: string | null
   genero?: 'masculino' | 'femenino' | null
+  cascoId?: string | null
+  supervisorId?: string | null
   createdAt: string
   updatedAt: string | null
 }

@@ -10,6 +10,7 @@ import type {
   ChangePasswordDto,
 } from '#dtos/user.dto'
 import User from '#models/user'
+import { toUserResponseDto } from '#mappers/user.mapper'
 
 export class AuthService {
   private userRepository: UserRepository
@@ -40,7 +41,7 @@ export class AuthService {
     const tokens = await SessionService.createSession(user, deviceInfo, ipAddress, userAgent)
 
     return {
-      user: this.mapUserToResponse(user),
+      user: toUserResponseDto(user),
       accessToken: tokens.accessToken,
       sessionId: tokens.sessionId,
     }
@@ -69,7 +70,7 @@ export class AuthService {
     const tokens = await SessionService.createSession(user, deviceInfo, ipAddress, userAgent)
 
     return {
-      user: this.mapUserToResponse(user),
+      user: toUserResponseDto(user),
       accessToken: tokens.accessToken,
       sessionId: tokens.sessionId,
     }
@@ -121,47 +122,58 @@ export class AuthService {
     data: RegisterMineroDto,
     supervisorId: string
   ): Promise<{ user: UserResponseDto; temporaryPassword: string; message: string }> {
+    // 1. Validar que el email no esté registrado
     const emailExists = await this.userRepository.emailExists(data.email)
     if (emailExists) {
       throw new Error('El email ya está registrado')
     }
 
-    const casco = await this.cascoRepository.findById(data.cascoId)
-    if (!casco) throw new Error('El casco no existe')
-    if (casco.supervisorId !== supervisorId)
-      throw new Error('El casco no pertenece a este supervisor')
-    if (casco.mineroId) throw new Error('El casco ya está asignado a otro minero')
-    if (!casco.isActive) throw new Error('El casco no está activo')
+    // 2. Validar y asignar casco solo si se proporciona cascoId
+    let casco = null
+    if (data.cascoId) {
+      // Buscar el casco por ID
+      casco = await this.cascoRepository.findById(data.cascoId)
+      if (!casco) throw new Error('El casco no existe')
+      if (casco.supervisorId !== supervisorId)
+        throw new Error('El casco no pertenece a este supervisor')
+      if (casco.mineroId) throw new Error('El casco ya está asignado a otro minero')
+      if (!casco.asignadoSupervisor) throw new Error('El casco no está activado para supervisión')
+      if (casco.asignadoMinero) throw new Error('El casco ya está asignado a un minero')
+    }
 
+    // 3. Generar contraseña temporal
     const temporaryPassword = this.generateTemporaryPassword()
 
-    const user = await this.userRepository.createMinero({
-      ...data,
+    // 4. Construir el payload SOLO con los campos que aplican
+    const mineroPayload: any = {
+      fullName: data.fullName,
+      email: data.email,
       password: temporaryPassword,
-    })
+      role: 'minero',
+      supervisorId,
+      fechaContratacion: data.fechaContratacion ?? null,
+      especialidadEnMineria: data.especialidadEnMineria ?? null,
+      genero: data.genero ?? null,
+    }
 
-    await this.cascoRepository.assignToMinero(casco.id, user.id)
+    if (data.cascoId) {
+      mineroPayload.cascoId = data.cascoId
+    }
 
+    // 5. Crear el usuario minero
+    const user = await this.userRepository.createMinero(mineroPayload)
+
+    // 6. Si se asignó casco, actualizar el casco para referenciar al nuevo minero
+    if (casco) {
+      await this.cascoRepository.assignToMinero(casco.id, user.id)
+    }
+
+    // 7. Retornar respuesta estructurada
     return {
-      user: this.mapUserToResponse(user),
+      user: toUserResponseDto(user),
       temporaryPassword,
       message: 'Minero registrado exitosamente',
     }
-  }
-
-  private mapUserToResponse(user: User): UserResponseDto {
-    const response: UserResponseDto = {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt.toISO()!,
-      updatedAt: user.updatedAt?.toISO() || null,
-    }
-    if (user.role === 'minero') {
-      response.cascoId = user.cascoId
-    }
-    return response
   }
 
   private generateTemporaryPassword(): string {

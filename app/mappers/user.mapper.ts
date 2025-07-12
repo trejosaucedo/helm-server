@@ -11,6 +11,8 @@ export function toUserResponseDto(user: User): UserResponseDto {
     fechaContratacion: user.fechaContratacion ? user.fechaContratacion.toISO() : null,
     especialidadEnMineria: user.especialidadEnMineria ?? null,
     genero: user.genero ?? null,
+    cascoId: user.cascoId ?? null,
+    supervisorId: user.supervisorId ?? null,
     createdAt: user.createdAt ? user.createdAt.toISO()! : new Date().toISOString(),
     updatedAt: user.updatedAt ? user.updatedAt.toISO() : null,
   }

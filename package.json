@@ -33,7 +33,8 @@
     "#repositories/*": "./app/repositories/*.js",
     "#types/*": "./app/types/*.js",
     "#dtos/*": "./app/dtos/*.js",
-    "#utils/*": "./app/utils/*.js"
+    "#utils/*": "./app/utils/*.js",
+    "#mappers/*": "./app/mappers/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^7.8.2",

@@ -56,7 +56,6 @@ export default class AuthController {
     }
   }
 
-
   me = withUser(async (user, { response }) => {
     return TokenUtils.successResponse(
       response,

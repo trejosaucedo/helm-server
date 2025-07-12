@@ -9,8 +9,10 @@ export default class extends BaseSchema {
       table.string('full_name').nullable()
       table.string('email', 254).notNullable().unique()
       table.string('password').notNullable()
-      table.enum('role', ['supervisor', 'minero','admin']).defaultTo('supervisor')
-      table.string('casco_id').nullable().unique() // Para mineros: el casco que tienen asignado
+      table.enum('role', ['supervisor', 'minero', 'admin']).defaultTo('supervisor')
+      table.uuid('supervisor_id').nullable()
+      table.uuid('casco_id').nullable()
+      table.string('casco_id').nullable().unique()
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()
     })
