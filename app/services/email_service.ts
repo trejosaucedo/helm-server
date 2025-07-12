@@ -86,11 +86,11 @@ export class EmailService {
     // Mostrar datos adicionales si existen
     if (notification.data) {
       console.log(`Información adicional:`)
-      if (notification.type === 'sensor' && notification.data.sensorType) {
-        console.log(`- Sensor: ${notification.data.sensorType}`)
-        console.log(`- Valor registrado: ${notification.data.value}${notification.data.unit}`)
-        console.log(`- Límite seguro: ${notification.data.threshold}${notification.data.unit}`)
-        console.log(`- Hora: ${new Date(notification.data.timestamp).toLocaleString('es-MX')}`)
+      if (notification.type === 'sensor' && notification.getData()?.sensorType) {
+        console.log(`- Sensor: ${notification.getData().sensorType}`)
+        console.log(`- Valor registrado: ${notification.getData().value}${notification.getData().unit}`)
+        console.log(`- Límite seguro: ${notification.getData().threshold}${notification.getData().unit}`)
+        console.log(`- Hora: ${new Date(notification.getData().timestamp).toLocaleString('es-MX')}`)
       } else {
         console.log(`- Datos: ${JSON.stringify(notification.data, null, 2)}`)
       }
@@ -197,10 +197,10 @@ export class EmailService {
     
     if (notification.data && notification.type === 'sensor') {
       console.log(`DETALLES DEL SENSOR:`)
-      console.log(`- Sensor: ${notification.data.sensorType}`)
-      console.log(`- Valor: ${notification.data.value}${notification.data.unit}`)
-      console.log(`- Límite: ${notification.data.threshold}${notification.data.unit}`)
-      console.log(`- Desviación: ${(Math.abs(notification.data.value - notification.data.threshold) / notification.data.threshold * 100).toFixed(1)}%`)
+      console.log(`- Sensor: ${notification.getData().sensorType}`)
+      console.log(`- Valor: ${notification.getData().value}${notification.getData().unit}`)
+      console.log(`- Límite: ${notification.getData().threshold}${notification.getData().unit}`)
+      console.log(`- Desviación: ${(Math.abs(notification.getData().value - notification.getData().threshold) / notification.getData().threshold * 100).toFixed(1)}%`)
       console.log(``)
     }
 

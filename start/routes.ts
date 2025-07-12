@@ -100,9 +100,28 @@ router
 // ------------------------
 router
   .group(() => {
-    // Recibe lecturas de cualquier sensor y genera alertas
-    // body: { sensorType: string, value: number, ... }
-    router.post('/data', '#controllers/sensor_controller.ingest')
+    // Crear sensor (solo supervisor)
+    router.post('/', '#controllers/sensor_controller.store').use(middleware.auth('supervisor'))
+    
+    // Actualizar sensor (solo supervisor)
+    router.put('/:id', '#controllers/sensor_controller.update').use(middleware.auth('supervisor'))
+    
+    // Obtener sensores por casco
+    router.get('/casco/:cascoId', '#controllers/sensor_controller.getByCasco').use(middleware.auth())
+    
+    // Obtener sensores por minero
+    router.get('/minero/:mineroId', '#controllers/sensor_controller.getByMinero').use(middleware.auth())
+    
+    // Obtener estadísticas de sensor
+    router.get('/:id/stats', '#controllers/sensor_controller.getSensorStats').use(middleware.auth())
+    
+    // Ingestión de lecturas (sin autenticación para dispositivos)
+    router.post('/readings', '#controllers/sensor_controller.ingestReading')
+    router.post('/readings/batch', '#controllers/sensor_controller.ingestBatchReadings')
+    
+    // Consultar lecturas (con autenticación)
+    router.get('/readings', '#controllers/sensor_controller.getReadings').use(middleware.auth())
+    router.get('/readings/recent/:mineroId', '#controllers/sensor_controller.getRecentReadings').use(middleware.auth())
   })
   .prefix('/sensors')
 

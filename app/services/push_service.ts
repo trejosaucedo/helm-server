@@ -42,7 +42,7 @@ interface PushResult {
 export class PushService {
   private config: PushConfig
   private fcmEndpoint = 'https://fcm.googleapis.com/fcm/send'
-  private apnsEndpoint = 'https://api.push.apple.com/3/device'
+  // private apnsEndpoint = 'https://api.push.apple.com/3/device'
   private retryAttempts = 3
   private retryDelay = 1000 // 1 segundo
 
@@ -261,7 +261,7 @@ export class PushService {
   /**
    * Construye el payload de push basado en la notificación
    */
-  private buildNotificationPayload(notification: Notification, user: User): PushPayload {
+  private buildNotificationPayload(notification: Notification, _user: User): PushPayload {
     const priorityConfig = {
       low: { priority: 'normal' as const, sound: 'default' },
       medium: { priority: 'normal' as const, sound: 'default' },
@@ -277,8 +277,8 @@ export class PushService {
     
     if (notification.type === 'sensor') {
       title = `⚠️ ${notification.title}`
-      if (notification.data?.sensorType) {
-        body = `${notification.data.sensorType}: ${notification.data.value}${notification.data.unit} (Límite: ${notification.data.threshold}${notification.data.unit})`
+      if (notification.getData()?.sensorType) {
+        body = `${notification.getData().sensorType}: ${notification.getData().value}${notification.getData().unit} (Límite: ${notification.getData().threshold}${notification.getData().unit})`
       }
     } else if (notification.priority === 'critical') {
       title = `🚨 ${notification.title}`
@@ -289,7 +289,7 @@ export class PushService {
       type: notification.type,
       priority: notification.priority,
       timestamp: notification.createdAt.toISO(),
-      ...notification.data
+      ...notification.getData()
     }
 
     return {

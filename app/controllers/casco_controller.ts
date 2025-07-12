@@ -61,8 +61,7 @@ export default class CascoController {
       if (!user) return
 
       const payload = await ctx.request.validateUsing(activateCascoValidator)
-      const activationData = { ...payload, supervisorId: user.id }
-      const result = await this.cascoService.activateCasco(activationData)
+      const result = await this.cascoService.activateCascoByPhysicalId(user.id, payload.physicalId)
       return jsonSuccess(ctx.response, 'Casco activado exitosamente', result, 201)
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_ACTIVATE')
@@ -145,8 +144,9 @@ export default class CascoController {
     try {
       const payload = await request.validateUsing(createCascoValidator)
       const newCasco = await this.cascoService.createCascoAdmin({
-        supervisorId: payload.supervisorId,
+        serial: payload.physicalId, // Usar physicalId como serial por defecto
         physicalId: payload.physicalId,
+        supervisorId: payload.supervisorId,
       })
 
       return response.created({

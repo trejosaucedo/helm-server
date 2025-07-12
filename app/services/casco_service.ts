@@ -23,31 +23,30 @@ export class CascoService {
     return this.mapCascoToResponse(casco)
   }
 
-  async activateCasco(data: ActivateCascoDto): Promise<CascoResponseDto> {
+  async activateCascoByPhysicalId(supervisorId: string, physicalId: string): Promise<CascoResponseDto> {
     // Verificar que el casco existe en el sistema
-    const cascoExists = await this.cascoRepository.cascoExistsByPhysicalId(data.physicalId)
+    const cascoExists = await this.cascoRepository.cascoExistsByPhysicalId(physicalId)
     if (!cascoExists) {
       throw new Error('El casco con este ID físico no existe en el sistema')
     }
 
     // Verificar que el casco está disponible para ser activado (no vinculado a otro supervisor)
-    const isAvailable = await this.cascoRepository.isPhysicalIdAvailableForActivation(
-      data.physicalId
-    )
+    const isAvailable = await this.cascoRepository.isPhysicalIdAvailableForActivation(physicalId)
     if (!isAvailable) {
       throw new Error('Este casco ya está vinculado a otro supervisor')
     }
 
     // Activar/vincular el casco al supervisor
-    const casco = await this.cascoRepository.activateCascoForSupervisor(
-      data.supervisorId,
-      data.physicalId
-    )
+    const casco = await this.cascoRepository.activateCascoForSupervisor(supervisorId, physicalId)
     if (!casco) {
       throw new Error('Error al activar el casco')
     }
 
     return this.mapCascoToResponse(casco)
+  }
+
+  async activateCasco(data: ActivateCascoDto): Promise<CascoResponseDto> {
+    return this.activateCascoByPhysicalId(data.supervisorId, data.physicalId)
   }
 
   async getCascosBySupervisor(supervisorId: string): Promise<CascoResponseDto[]> {
@@ -123,10 +122,14 @@ export class CascoService {
   private mapCascoToResponse(casco: any): CascoResponseDto {
     return {
       id: casco.id,
+      serial: casco.serial,
       physicalId: casco.physicalId,
+      isActive: casco.isActive,
       supervisorId: casco.supervisorId,
       mineroId: casco.mineroId,
-      isActive: casco.isActive,
+      asignadoSupervisor: casco.asignadoSupervisor,
+      asignadoMinero: casco.asignadoMinero,
+      fechaActivacion: casco.fechaActivacion?.toISO() || null,
       isAssigned: !!casco.mineroId,
       createdAt: casco.createdAt.toISO(),
       updatedAt: casco.updatedAt?.toISO() || null,

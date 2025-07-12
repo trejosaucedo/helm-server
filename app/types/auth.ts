@@ -4,6 +4,7 @@ export interface TokenData {
   userId: string
   email: string
   role: 'supervisor' | 'minero' | 'admin'
+  cascoId: string | null
   createdAt: string
   sessionId?: string
   type?: 'access' | 'refresh'

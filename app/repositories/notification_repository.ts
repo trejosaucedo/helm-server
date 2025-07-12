@@ -25,13 +25,13 @@ export class NotificationRepository {
     notification.title = attrs.title
     notification.message = attrs.message
     notification.priority = attrs.priority || 'medium'
-    notification.deliveryChannels = attrs.deliveryChannels || ['database']
+    notification.setDeliveryChannels(attrs.deliveryChannels || ['database'])
     notification.isError = false
     notification.emailSent = false
     notification.pushSent = false
     
     if (attrs.data !== undefined) {
-      notification.data = attrs.data
+      notification.setData(attrs.data)
     }
     
     await notification.save()

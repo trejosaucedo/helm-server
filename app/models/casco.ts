@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
+import { BaseModel, column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import User from './user.js'
-import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import Sensor from './sensor.js'
+import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 
 export default class Casco extends BaseModel {
   @column({ isPrimary: true })
@@ -9,6 +10,12 @@ export default class Casco extends BaseModel {
 
   @column()
   declare serial: string
+
+  @column()
+  declare physicalId: string
+
+  @column()
+  declare isActive: boolean
 
   @column()
   declare asignadoSupervisor: boolean
@@ -34,6 +41,11 @@ export default class Casco extends BaseModel {
     foreignKey: 'mineroId',
   })
   declare minero: BelongsTo<typeof User>
+
+  @hasMany(() => Sensor, {
+    foreignKey: 'cascoId',
+  })
+  declare sensores: HasMany<typeof Sensor>
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

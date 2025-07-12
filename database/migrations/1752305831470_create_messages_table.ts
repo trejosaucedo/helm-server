@@ -11,8 +11,8 @@ export default class extends BaseSchema {
       table.uuid('equipo_id').nullable().references('id').inTable('teams').onDelete('SET NULL')
       table.text('mensaje').notNullable()
       table.text('read_by').nullable() // JSON de IDs que han leído (para grupal)
-      table.timestamp('created_at', { useTz: true }).notNullable()
-      table.timestamp('updated_at', { useTz: true }).notNullable()
+      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table.timestamp('updated_at', { useTz: true }).nullable()
     })
   }
 
