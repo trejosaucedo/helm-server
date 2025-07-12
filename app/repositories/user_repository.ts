@@ -1,6 +1,6 @@
 import User from '#models/user'
 import { UpdateMineroData, UpdateSupervisorData } from '#types/user'
-import { RegisterMineroDto, RegisterSupervisorDto } from '#dtos/auth'
+import { RegisterMineroDto, RegisterSupervisorDto } from '#dtos/user.dto'
 
 export class UserRepository {
   async findByEmail(email: string): Promise<User | null> {

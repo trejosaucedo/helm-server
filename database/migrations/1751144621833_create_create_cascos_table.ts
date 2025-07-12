@@ -5,32 +5,19 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.string('id').primary()
-      table.string('physical_id').notNullable().unique()
-      table.string('supervisor_id').nullable()
-      table.string('minero_id').nullable()
-      table.boolean('is_active').defaultTo(false)
-      table.timestamp('created_at').notNullable()
-      table.timestamp('updated_at').nullable()
-
-      // Foreign keys
-      table.foreign('supervisor_id').references('id').inTable('users').onDelete('CASCADE')
-      table.foreign('minero_id').references('id').inTable('users').onDelete('SET NULL')
-    })
-
-    // Agregar foreign key de users.casco_id -> cascos.id
-    this.schema.alterTable('users', (table) => {
-      table.foreign('casco_id').references('id').inTable('cascos').onDelete('SET NULL')
+      table.uuid('id').primary()
+      table.string('serial').unique().notNullable()
+      table.boolean('asignado_supervisor').notNullable().defaultTo(false)
+      table.boolean('asignado_minero').notNullable().defaultTo(false)
+      table.uuid('supervisor_id').nullable().references('id').inTable('users').onDelete('SET NULL')
+      table.uuid('minero_id').nullable().references('id').inTable('users').onDelete('SET NULL')
+      table.timestamp('fecha_activacion', { useTz: true }).nullable()
+      table.timestamp('created_at', { useTz: true }).notNullable()
+      table.timestamp('updated_at', { useTz: true }).notNullable()
     })
   }
 
   async down() {
-    // Primero eliminar la foreign key de users
-    this.schema.alterTable('users', (table) => {
-      table.dropForeign(['casco_id'])
-    })
-
-    // Luego eliminar la tabla cascos
     this.schema.dropTable(this.tableName)
   }
 }

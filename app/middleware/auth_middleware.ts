@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { TokenUtils } from '#utils/token_utils'
 import { SessionService } from '#services/session_service'
+import { toUserResponseDto } from '../mappers/user.mapper.js'
 
 export default class AuthMiddleware {
   public async handle(ctx: HttpContext, next: NextFn, guards?: string | string[]) {
@@ -42,7 +43,7 @@ export default class AuthMiddleware {
       return TokenUtils.forbiddenResponse(ctx.response, 'No tienes acceso a esta sección')
     }
 
-    ctx.user = user
+    ctx.user = toUserResponseDto(user)
     ctx.tokenData = validation.tokenData
 
     return next()

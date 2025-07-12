@@ -1,10 +1,9 @@
-import type User from '#models/user'
+import type { UserResponseDto } from '#dtos/user.dto'
 
 export interface TokenData {
   userId: string
   email: string
   role: 'supervisor' | 'minero' | 'admin'
-  cascoId: string | null
   createdAt: string
   sessionId?: string
   type?: 'access' | 'refresh'
@@ -31,7 +30,7 @@ export interface SessionInfo {
 
 declare module '@adonisjs/core/http' {
   interface HttpContext {
-    user?: User
+    user?: UserResponseDto
     tokenData?: TokenData
   }
 }

@@ -1,31 +1,33 @@
+export interface CreateCascoDto {
+  serial: string
+}
+
 export interface ActivateCascoDto {
-  physicalId: string
+  cascoId: string
   supervisorId: string
 }
 
 export interface AssignCascoDto {
   cascoId: string
   mineroId: string
-  supervisorId: string
 }
 
 export interface UnassignCascoDto {
   cascoId: string
-  supervisorId: string
 }
 
 export interface DesactivateCascoDto {
   cascoId: string
-  supervisorId: string
 }
 
 export interface CascoResponseDto {
   id: string
-  physicalId: string
-  supervisorId: string
+  serial: string
+  supervisorId: string | null
   mineroId: string | null
-  isActive: boolean
-  isAssigned: boolean
+  asignadoSupervisor: boolean
+  asignadoMinero: boolean
+  fechaActivacion: string | null
   createdAt: string
   updatedAt: string | null
   minero?: {
@@ -33,9 +35,4 @@ export interface CascoResponseDto {
     fullName: string | null
     email: string
   }
-}
-
-export interface CreateCascoDto {
-  supervisorId?: string
-  physicalId: string
 }

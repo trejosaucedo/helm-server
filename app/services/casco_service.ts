@@ -7,7 +7,7 @@ import type {
   CreateCascoDto,
   DesactivateCascoDto,
   UnassignCascoDto,
-} from '#dtos/casco'
+} from '#dtos/casco.dto'
 
 export class CascoService {
   private cascoRepository: CascoRepository

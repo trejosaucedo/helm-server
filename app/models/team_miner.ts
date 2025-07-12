@@ -1,39 +1,37 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import User from './user.js'
+import Team from './team.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 
-export default class Casco extends BaseModel {
+export default class TeamMiner extends BaseModel {
   @column({ isPrimary: true })
   declare id: string
 
   @column()
-  declare serial: string
+  declare mineroId: string
 
   @column()
-  declare asignadoSupervisor: boolean
+  declare equipoId: string
 
   @column()
-  declare asignadoMinero: boolean
-
-  @column()
-  declare supervisorId: string | null
-
-  @column()
-  declare mineroId: string | null
+  declare activo: boolean
 
   @column.dateTime()
-  declare fechaActivacion: DateTime | null
+  declare fechaAsignacion: DateTime
 
-  @belongsTo(() => User, {
-    foreignKey: 'supervisorId',
-  })
-  declare supervisor: BelongsTo<typeof User>
+  @column.dateTime()
+  declare fechaSalida: DateTime | null
 
   @belongsTo(() => User, {
     foreignKey: 'mineroId',
   })
   declare minero: BelongsTo<typeof User>
+
+  @belongsTo(() => Team, {
+    foreignKey: 'equipoId',
+  })
+  declare equipo: BelongsTo<typeof Team>
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

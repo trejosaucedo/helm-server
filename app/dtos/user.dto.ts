@@ -7,7 +7,9 @@ export interface RegisterSupervisorDto {
 export interface RegisterMineroDto {
   fullName: string
   email: string
-  cascoId: string
+  fechaContratacion?: string
+  especialidadEnMineria?: string
+  genero?: 'masculino' | 'femenino'
 }
 
 export interface LoginDto {
@@ -25,9 +27,10 @@ export interface UserResponseDto {
   fullName: string | null
   email: string
   role: 'supervisor' | 'minero' | 'admin'
-  cascoId?: string | null
+  estado: 'activo' | 'inactivo'
+  fechaContratacion?: string | null
+  especialidadEnMineria?: string | null
+  genero?: 'masculino' | 'femenino' | null
   createdAt: string
   updatedAt: string | null
-  temporaryPassword?: string
-  message?: string
 }

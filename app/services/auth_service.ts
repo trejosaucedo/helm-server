@@ -8,7 +8,7 @@ import type {
   RegisterMineroDto,
   RegisterSupervisorDto,
   ChangePasswordDto,
-} from '#dtos/auth'
+} from '#dtos/user.dto'
 import User from '#models/user'
 
 export class AuthService {

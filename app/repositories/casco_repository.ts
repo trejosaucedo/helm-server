@@ -1,5 +1,5 @@
 import Casco from '#models/casco'
-import { CreateCascoDto } from '#dtos/casco'
+import { CreateCascoDto } from '#dtos/casco.dto'
 
 export class CascoRepository {
   /*
