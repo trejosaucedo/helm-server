@@ -5,7 +5,6 @@ import {
   BaseModel,
   column,
   beforeCreate,
-  beforeSave,
   hasMany,
   belongsTo,
 } from '@adonisjs/lucid/orm'
@@ -109,13 +108,6 @@ export default class User extends compose(BaseModel, AuthFinder) {
   static assignUuid(user: User) {
     if (!user.id) {
       user.id = randomUUID()
-    }
-  }
-
-  @beforeSave()
-  static async hashPassword(user: any) {
-    if (user.$dirty?.password) {
-      user.password = await hash.make(user.password)
     }
   }
 }

@@ -200,4 +200,57 @@ export default class SensorController {
       return ErrorHandler.handleError(error, response, 'Error al obtener estadísticas', 400)
     }
   }
+
+  /**
+   * POST /cascos/:cascoId/sensores/:sensorId
+   * Recibe datos del dispositivo Raspberry Pi
+   */
+  async publishSensorData({ params, request, response }: HttpContext) {
+    try {
+      const { cascoId, sensorId } = params
+      const deviceToken = request.header('x-device-token')
+      const sensorData = request.body()
+
+      if (!deviceToken) {
+        return response.status(401).json({
+          success: false,
+          message: 'Token de dispositivo requerido',
+        })
+      }
+
+      // 1. Validar que el casco existe
+      const cascoExists = await this.sensorService.validateCascoExists(cascoId)
+      if (!cascoExists) {
+        return response.status(404).json({
+          success: false,
+          message: `Casco ${cascoId} no encontrado`,
+        })
+      }
+
+      // 2. Validar que el sensor existe en ese casco específico
+      const sensorValidation = await this.sensorService.validateSensorInCasco(sensorId, cascoId)
+      if (!sensorValidation.isValid) {
+        return response.status(404).json({
+          success: false,
+          message: sensorValidation.message,
+        })
+      }
+
+      // 3. Procesar datos del sensor
+      await this.sensorService.publishSensorData({
+        cascoId,
+        sensorId,
+        data: sensorData,
+        deviceToken
+      })
+
+      return response.json({
+        success: true,
+        message: 'Datos de sensor procesados exitosamente',
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'SENSOR_PUBLISH_DATA')
+      return ErrorHandler.handleError(error, response, 'Error al procesar datos del sensor', 400)
+    }
+  }
 }

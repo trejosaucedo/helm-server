@@ -36,8 +36,11 @@ router
   .prefix('/cascos')
   .use(middleware.auth('supervisor'))
 
-// Crear casco (solo admin)
-router.post('/cascos', '#controllers/casco_controller.create').use(middleware.auth('admin'))
+// Crear casco (supervisores y admin)
+router.post('/cascos', '#controllers/casco_controller.create').use(middleware.auth('supervisor'))
+
+// RUTA TEMPORAL - ELIMINAR DESPUÉS DE DEBUGGING
+router.delete('/cascos/clean', '#controllers/casco_controller.cleanCascos')
 
 // ------------------------
 // Notificaciones (usuario autenticado)
@@ -125,6 +128,23 @@ router
       .use(middleware.auth())
   })
   .prefix('/sensors')
+
+// ------------------------
+// Dispositivos IoT (sin autenticación - usan token de dispositivo)
+// ------------------------
+router.post('/cascos/:cascoId/sensores/:sensorId', '#controllers/sensor_controller.publishSensorData')
+
+// ------------------------
+// Health Check
+// ------------------------
+router.get('/health', ({ response }) => {
+  return response.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'helm-server',
+    version: '1.0.0'
+  })
+})
 
 // ------------------------
 // Fin de routes.ts
