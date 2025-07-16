@@ -11,10 +11,13 @@ export class AccessCodeRepository {
   }
 
   async markCodeAsUsed(id: string) {
-    await AccessCode.query().where('id', id).update({
-      usado: true,
-      fecha_uso: DateTime.now(),
-    })
+    // Usar consulta SQL directa para evitar problemas con zonas horarias
+    await AccessCode.query()
+      .where('id', id)
+      .update({
+        usado: true,
+        fecha_uso: DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss'),
+      })
   }
 
   async create(codigo: string, correoSupervisor: string) {
