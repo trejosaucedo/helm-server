@@ -58,12 +58,3 @@ export const idParamsValidator = vine.compile(
     id: vine.string().uuid(),
   })
 )
-
-/**
- * Validator para marcar como error
- */
-export const markAsErrorValidator = vine.compile(
-  vine.object({
-    comment: vine.string().minLength(1).maxLength(500).optional(),
-  })
-)

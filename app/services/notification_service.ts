@@ -8,8 +8,6 @@ import { PushService } from '#services/push_service'
 
 export interface CreateNotificationDTO extends CreateNotificationAttrs {}
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com'
-
 export class NotificationService {
   private repo = new NotificationRepository()
   private emailService = new EmailService()
@@ -117,38 +115,6 @@ export class NotificationService {
 
   public async markAllAsRead(userId: string): Promise<void> {
     await this.repo.markAllAsRead(userId)
-  }
-
-  /**
-   * Marca notificación como errónea (feedback usuario) y notifica al admin.
-   */
-  public async markAsError(
-    notificationId: string,
-    userId: string,
-    comment?: string
-  ): Promise<void> {
-    // 1. Registrar el error en BD
-    await this.repo.markAsError(notificationId, userId, comment)
-
-    // 2. Recuperar la notificación para el reporte
-    const notification = await this.repo.findById(notificationId)
-
-    // 3. Validar que exista
-    if (!notification) {
-      throw new Error(`Notification with id ${notificationId} not found`)
-    }
-
-    // 4. Avisar al admin por email
-    try {
-      await this.emailService.sendErrorReportNotification(
-        ADMIN_EMAIL,
-        userId,
-        notification,
-        comment
-      )
-    } catch (err) {
-      console.error('Error enviando reporte de notificación errónea:', err)
-    }
   }
 
   public async deleteNotification(notificationId: string, userId: string): Promise<void> {

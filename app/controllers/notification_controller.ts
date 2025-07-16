@@ -1,11 +1,8 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import type { CreateNotificationDTO } from '#services/notification_service'
 import { NotificationService } from '#services/notification_service'
 import {
-  createNotificationValidator,
   paginationValidator,
   idParamsValidator,
-  markAsErrorValidator,
   bulkCreateValidator,
 } from '#validators/notification'
 
@@ -30,32 +27,6 @@ export default class NotificationController {
     return response.ok({
       success: true,
       data: notifications,
-    })
-  }
-
-  /**
-   * POST /notifications
-   * Crea una nueva notificación (solo admin/supervisor)
-   */
-  public async store({ request, response, auth }: HttpContext & { auth: any }) {
-    const user = auth.user!
-
-    if (!['admin', 'supervisor'].includes(user.role)) {
-      return response.forbidden({
-        success: false,
-        message: 'Solo administradores y supervisores pueden crear notificaciones',
-      })
-    }
-
-    const attrs = (await request.validateUsing(
-      createNotificationValidator
-    )) as CreateNotificationDTO
-
-    const notification = await this.service.sendNotification(attrs)
-
-    return response.created({
-      success: true,
-      data: notification,
     })
   }
 
@@ -95,23 +66,6 @@ export default class NotificationController {
 
     return response.ok({
       success: true,
-    })
-  }
-
-  /**
-   * POST /notifications/:id/error
-   * Marca una notificación como errónea (feedback del usuario)
-   */
-  public async markAsError({ params, request, response, auth }: HttpContext & { auth: any }) {
-    const { id } = await params.validateUsing(idParamsValidator)
-    const { comment } = await request.validateUsing(markAsErrorValidator)
-    const userId = auth.user!.id
-
-    await this.service.markAsError(id, userId, comment)
-
-    return response.ok({
-      success: true,
-      message: 'Notificación marcada como errónea. Gracias por tu feedback.',
     })
   }
 

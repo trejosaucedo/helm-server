@@ -59,8 +59,6 @@ router
     router.post('/:id/read', '#controllers/notification_controller.markRead')
     // Marcar todas como leídas
     router.post('/read-all', '#controllers/notification_controller.markAllRead')
-    // Marcar como errónea (feedback usuario)
-    router.post('/:id/error', '#controllers/notification_controller.markAsError')
     // Eliminar una específica
     router.delete('/:id', '#controllers/notification_controller.destroy')
     // Limpiar todas leídas
@@ -72,10 +70,6 @@ router
 // ------------------------
 // Notificaciones: creación y stats
 // ------------------------
-// Crear notificación manual (admin o supervisor)
-router
-  .post('/notifications', '#controllers/notification_controller.store')
-  .use(middleware.auth('admin'))
 
 // Crear múltiples notificaciones (bulk) (admin o supervisor)
 router

@@ -85,21 +85,6 @@ export class NotificationRepository {
     })
   }
 
-  public async markAsError(
-    notificationId: string,
-    userId: string,
-    comment?: string
-  ): Promise<void> {
-    await Notification.query()
-      .where('id', notificationId)
-      .where('user_id', userId)
-      .update({
-        is_error: true,
-        error_comment: comment || null,
-        updated_at: DateTime.local(),
-      })
-  }
-
   public async markAllAsRead(userId: string): Promise<void> {
     await Notification.query().where('user_id', userId).where('is_read', false).update({
       is_read: true,
