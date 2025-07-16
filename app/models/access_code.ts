@@ -14,15 +14,15 @@ export default class AccessCode extends BaseModel {
   @column()
   declare usado: boolean
 
-  @column.dateTime()
+  @column.dateTime({ useTz: false })
   declare fechaGeneracion: DateTime
 
-  @column.dateTime()
+  @column.dateTime({ useTz: false })
   declare fechaUso: DateTime | null
 
-  @column.dateTime({ autoCreate: true })
+  @column.dateTime({ autoCreate: true, useTz: false })
   declare createdAt: DateTime
 
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  @column.dateTime({ autoCreate: true, autoUpdate: true, useTz: false })
   declare updatedAt: DateTime | null
 }
