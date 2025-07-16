@@ -7,7 +7,7 @@ import { middleware } from './kernel.js'
 router.post('/register', '#controllers/auth_controller.register')
 router.post('/login', '#controllers/auth_controller.login')
 router
-  .post('/access-codes', '#controllers/access_code_controller.createAccessCodeForSupervisor')
+  .post('/access-codes', '#controllers/auth_controller.createAccessCodeForSupervisor')
   .use(middleware.auth('admin'))
 // ------------------------
 // Auth protegidas

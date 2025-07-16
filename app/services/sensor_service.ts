@@ -11,6 +11,8 @@ import type {
   SensorStatsDto,
 } from '#dtos/sensor.dto'
 import Sensor from '#models/sensor'
+import { wsService } from '#start/ws'
+import type { SensorReading } from '#types/sensor'
 
 export class SensorService {
   private sensorRepository: SensorRepository
@@ -93,6 +95,23 @@ export class SensorService {
       // Si es alerta, generar notificación automática
       if (isAlert) {
         await this.generateAlertNotification(reading, sensor)
+      }
+
+      // Emit real-time sensor reading to WebSocket clients
+      if (wsService) {
+        const mineroId = (await this.cascoRepository.findById(sensor.cascoId))?.mineroId
+        if (mineroId) {
+          const sensorReading: SensorReading = {
+            type: sensor.type,
+            value: reading.value,
+            timestamp: reading.timestamp.toISOString(),
+            sensorId: sensor.id,
+            cascoId: sensor.cascoId,
+            mineroId: mineroId,
+            unit: sensor.unit || ''
+          }
+          wsService.emitSensorReading(sensorReading)
+        }
       }
 
       return reading

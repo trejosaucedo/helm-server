@@ -1,29 +1,32 @@
 import app from '@adonisjs/core/services/app'
 import server from '@adonisjs/core/services/server'
 import { Server } from 'socket.io'
+import { wsAuthMiddleware } from '../app/middleware/ws_auth_middleware.js'
+import { WebSocketService } from '../app/services/websocket_service.js'
 
 let io: Server | null = null
+let wsService: WebSocketService | null = null
 
 app.ready(() => {
   io = new Server(server.getNodeServer(), {
     cors: {
       origin: '*',
       methods: ['GET', 'POST'],
+      credentials: true
     },
   })
 
+  // Crear instancia del servicio WebSocket
+  wsService = new WebSocketService(io)
+
+  // Usar middleware de autenticación
+  io.use(wsAuthMiddleware)
+
+  // Manejar conexiones
   io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id)
-
-    socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id)
-    })
-
-    // Eventos para sensores (configuración base)
-    socket.on('sensor-data', (data) => {
-      console.log('Sensor data received:', data)
-    })
+    wsService?.handleConnection(socket)
   })
 })
 
-export { io }
+// Exportar para uso en otros archivos
+export { io, wsService }
