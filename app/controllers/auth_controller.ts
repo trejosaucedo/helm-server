@@ -9,6 +9,7 @@ import { AuthService } from '#services/auth_service'
 import { ErrorHandler } from '#utils/error_handler'
 import { TokenUtils } from '#utils/token_utils'
 import { withUser, withSession } from '#utils/controller_helpers'
+import { ResponseHelper } from '#utils/response_helper'
 
 export default class AuthController {
   private authService: AuthService
@@ -107,5 +108,18 @@ export default class AuthController {
     await this.authService.logoutAll(user.id)
     TokenUtils.clearAuthCookies(response)
     return TokenUtils.successResponse(response, 'Todas las sesiones cerradas exitosamente')
+  })
+
+  createAccessCodeForSupervisor = withUser(async (user, { response }: HttpContext) => {
+    try {
+      const result = await this.authService.createAccessCodeForSupervisor(user)
+      return response.created({
+        success: true,
+        message: 'Código de acceso generado correctamente',
+        data: result,
+      })
+    } catch (error) {
+      return ResponseHelper.error(error, 'Error al generar código de acceso')
+    }
   })
 }

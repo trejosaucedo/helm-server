@@ -12,6 +12,7 @@ import type {
 import User from '#models/user'
 import { toUserResponseDto } from '#mappers/user.mapper'
 import { AccessCodeRepository } from '#repositories/acces_code_repository'
+import { randomBytes } from 'node:crypto'
 
 export class AuthService {
   private userRepository: UserRepository
@@ -178,6 +179,17 @@ export class AuthService {
       temporaryPassword,
       message: 'Minero registrado exitosamente',
     }
+  }
+
+  async createAccessCodeForSupervisor(user: User): Promise<{ code: string }> {
+    // 2. Generar código aleatorio
+    const code = randomBytes(6).toString('hex').toUpperCase() // Ej: 12 caracteres hexadecimales
+
+    // 3. Guardar el código en la base de datos
+    await this.codeRepo.create(code, user.email)
+
+    // 4. Retornar el código en objeto
+    return { code }
   }
 
   private generateTemporaryPassword(): string {

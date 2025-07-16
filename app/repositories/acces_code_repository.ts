@@ -16,4 +16,13 @@ export class AccessCodeRepository {
       fecha_uso: DateTime.now(),
     })
   }
+
+  async create(codigo: string, correoSupervisor: string) {
+    return AccessCode.create({
+      codigo,
+      correoSupervisor,
+      usado: false,
+      fechaGeneracion: DateTime.now(),
+    })
+  }
 }
