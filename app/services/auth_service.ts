@@ -181,15 +181,28 @@ export class AuthService {
     }
   }
 
-  async createAccessCodeForSupervisor(user: User): Promise<{ code: string }> {
+  async createAccessCodeForSupervisor(user: User, email: string): Promise<{ code: string; email: string }> {
+    console.log('AuthService: Iniciando creación de código para email:', email)
+    
+    // 1. Validar que el email no esté ya registrado
+    const emailExists = await this.userRepository.emailExists(email)
+    console.log('AuthService: Email existe:', emailExists)
+    
+    if (emailExists) {
+      throw new Error('El email ya está registrado')
+    }
+
     // 2. Generar código aleatorio
     const code = randomBytes(6).toString('hex').toUpperCase() // Ej: 12 caracteres hexadecimales
+    console.log('AuthService: Código generado:', code)
 
     // 3. Guardar el código en la base de datos
-    await this.codeRepo.create(code, user.email)
+    console.log('AuthService: Guardando código en BD')
+    await this.codeRepo.create(code, email)
+    console.log('AuthService: Código guardado exitosamente')
 
     // 4. Retornar el código en objeto
-    return { code }
+    return { code, email }
   }
 
   private generateTemporaryPassword(): string {
