@@ -65,6 +65,7 @@ export class AuthService {
       throw new Error('Credenciales inválidas')
     }
 
+    // Usar el hash configurado en withAuthFinder
     const isValidPassword = await hash.verify(user.password, data.password)
     if (!isValidPassword) {
       throw new Error('Credenciales inválidas')

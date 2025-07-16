@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
+import { BaseModel, column, belongsTo, hasMany, beforeCreate } from '@adonisjs/lucid/orm'
+import { randomUUID } from 'node:crypto'
 import User from './user.js'
 import Sensor from './sensor.js'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
@@ -52,4 +53,9 @@ export default class Casco extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+
+  @beforeCreate()
+  static async assignUuid(casco: Casco) {
+    casco.id = randomUUID()
+  }
 }

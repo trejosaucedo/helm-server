@@ -100,4 +100,15 @@ export class SensorRepository {
       .where('is_active', true)
       .preload('casco')
   }
+
+  /**
+   * Buscar sensores por minero (a través del casco asignado)
+   */
+  async findByMineroId(mineroId: string): Promise<Sensor[]> {
+    return await Sensor.query()
+      .whereHas('casco', (query) => {
+        query.where('minero_id', mineroId)
+      })
+      .preload('casco')
+  }
 }

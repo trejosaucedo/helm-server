@@ -44,7 +44,7 @@ export interface CreateSensorReadingDto {
   signalStrength?: number
   location?: string // JSON string para GPS
   metadata?: Record<string, any>
-  timestamp?: string // ISO string
+  timestamp?: string | Date // ISO string o Date object
 }
 
 export interface SensorReadingResponseDto {

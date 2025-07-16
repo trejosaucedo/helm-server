@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { CascoService } from '#services/casco_service'
 import {activateCascoValidator,assignCascoValidator,createCascoValidator,} from '#validators/casco'
 import { ErrorHandler } from '#utils/error_handler'
+import db from '@adonisjs/lucid/services/db'
 
 // Helpers
 function requireUser(ctx: HttpContext) {
@@ -140,13 +141,17 @@ export default class CascoController {
     }
   }
 
-  async create({ request, response }: HttpContext) {
+  async create({ request, response, user }: HttpContext) {
     try {
       const payload = await request.validateUsing(createCascoValidator)
+      
+      // Si no se proporciona supervisorId, usar el usuario autenticado
+      const supervisorId = payload.supervisorId || user?.id
+      
       const newCasco = await this.cascoService.createCascoAdmin({
         serial: payload.physicalId, // Usar physicalId como serial por defecto
         physicalId: payload.physicalId,
-        supervisorId: payload.supervisorId,
+        supervisorId: supervisorId,
       })
 
       return response.created({
@@ -157,6 +162,23 @@ export default class CascoController {
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_CREATE')
       return ErrorHandler.handleError(error, response, 'Error al crear casco', 400)
+    }
+  }
+
+  // MÉTODO TEMPORAL - ELIMINAR DESPUÉS DE DEBUGGING
+  async cleanCascos({ response }: HttpContext) {
+    try {
+      // Eliminar todos los cascos para limpiar registros corruptos
+      await db.from('cascos').delete()
+      
+      return response.ok({
+        success: true,
+        message: 'Tabla cascos limpiada exitosamente',
+        data: null,
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'CASCO_CLEAN')
+      return ErrorHandler.handleError(error, response, 'Error al limpiar cascos', 400)
     }
   }
 }

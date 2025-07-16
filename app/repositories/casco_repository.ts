@@ -94,6 +94,7 @@ export class CascoRepository {
 
   async createCasco(data: CreateCascoDto): Promise<Casco> {
     return await Casco.create({
+      serial: data.serial,
       physicalId: data.physicalId,
       supervisorId: data.supervisorId ?? null,
       isActive: true,
