@@ -44,7 +44,7 @@ export default class SensorController {
     try {
       const payload = await request.validateUsing(updateSensorValidator)
       const sensor = await this.sensorService.updateSensor(params.id, payload)
-      
+
       if (!sensor) {
         return response.status(404).json({
           success: false,
@@ -167,7 +167,7 @@ export default class SensorController {
    */
   async getRecentReadings({ params, request, response }: HttpContext) {
     try {
-      const minutes = parseInt(request.qs().minutes || '30', 10)
+      const minutes = Number.parseInt(request.qs().minutes || '30', 10)
       const readings = await this.sensorService.getRecentReadings(params.mineroId, minutes)
 
       return response.json({
@@ -187,7 +187,7 @@ export default class SensorController {
    */
   async getSensorStats({ params, request, response }: HttpContext) {
     try {
-      const hours = parseInt(request.qs().hours || '24', 10)
+      const hours = Number.parseInt(request.qs().hours || '24', 10)
       const stats = await this.sensorService.getSensorStats(params.id, hours)
 
       return response.json({
@@ -241,7 +241,7 @@ export default class SensorController {
         cascoId,
         sensorId,
         data: sensorData,
-        deviceToken
+        deviceToken,
       })
 
       return response.json({

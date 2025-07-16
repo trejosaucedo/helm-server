@@ -38,7 +38,7 @@ export class SensorReadingMongoService {
     if (!mongoUrl) {
       throw new Error('MONGODB_URL no está configurada en el archivo .env')
     }
-    
+
     this.client = new MongoClient(mongoUrl)
     this.db = this.client.db('helm-nosql')
     this.collection = this.db.collection<SensorReadingDocument>('sensor_readings')
@@ -57,10 +57,12 @@ export class SensorReadingMongoService {
   /**
    * Insertar una nueva lectura de sensor
    */
-  async insertReading(reading: Omit<SensorReadingDocument, '_id' | 'createdAt'>): Promise<SensorReadingDocument> {
+  async insertReading(
+    reading: Omit<SensorReadingDocument, '_id' | 'createdAt'>
+  ): Promise<SensorReadingDocument> {
     const document: SensorReadingDocument = {
       ...reading,
-      createdAt: new Date()
+      createdAt: new Date(),
     }
 
     const result = await this.collection.insertOne(document)
@@ -70,10 +72,12 @@ export class SensorReadingMongoService {
   /**
    * Insertar múltiples lecturas (para batch processing)
    */
-  async insertManyReadings(readings: Omit<SensorReadingDocument, '_id' | 'createdAt'>[]): Promise<void> {
-    const documents = readings.map(reading => ({
+  async insertManyReadings(
+    readings: Omit<SensorReadingDocument, '_id' | 'createdAt'>[]
+  ): Promise<void> {
+    const documents = readings.map((reading) => ({
       ...reading,
-      createdAt: new Date()
+      createdAt: new Date(),
     }))
 
     await this.collection.insertMany(documents)
@@ -96,8 +100,8 @@ export class SensorReadingMongoService {
     const filter: any = {
       timestamp: {
         $gte: startDate,
-        $lte: endDate
-      }
+        $lte: endDate,
+      },
     }
 
     if (options?.sensorId) filter.sensorId = options.sensorId
@@ -105,7 +109,8 @@ export class SensorReadingMongoService {
     if (options?.mineroId) filter.mineroId = options.mineroId
     if (options?.alertsOnly) filter.isAlert = true
 
-    const cursor = this.collection.find(filter)
+    const cursor = this.collection
+      .find(filter)
       .sort({ timestamp: -1 })
       .limit(options?.limit || 1000)
 
@@ -116,11 +121,7 @@ export class SensorReadingMongoService {
    * Obtener las últimas lecturas de un sensor
    */
   async getLatestReadings(sensorId: string, limit: number = 10): Promise<SensorReadingDocument[]> {
-    return await this.collection
-      .find({ sensorId })
-      .sort({ timestamp: -1 })
-      .limit(limit)
-      .toArray()
+    return await this.collection.find({ sensorId }).sort({ timestamp: -1 }).limit(limit).toArray()
   }
 
   /**
@@ -133,7 +134,7 @@ export class SensorReadingMongoService {
     since?: Date
   }): Promise<SensorReadingDocument[]> {
     const filter: any = { isAlert: true }
-    
+
     if (options?.cascoId) filter.cascoId = options.cascoId
     if (options?.mineroId) filter.mineroId = options.mineroId
     if (options?.since) filter.timestamp = { $gte: options.since }
@@ -148,7 +149,10 @@ export class SensorReadingMongoService {
   /**
    * Obtener estadísticas de un sensor
    */
-  async getSensorStats(sensorId: string, hours: number = 24): Promise<{
+  async getSensorStats(
+    sensorId: string,
+    hours: number = 24
+  ): Promise<{
     count: number
     avg: number
     min: number
@@ -156,27 +160,29 @@ export class SensorReadingMongoService {
     alertCount: number
   }> {
     const since = new Date(Date.now() - hours * 60 * 60 * 1000)
-    
-    const stats = await this.collection.aggregate([
-      {
-        $match: {
-          sensorId,
-          timestamp: { $gte: since }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          count: { $sum: 1 },
-          avg: { $avg: '$value' },
-          min: { $min: '$value' },
-          max: { $max: '$value' },
-          alertCount: {
-            $sum: { $cond: ['$isAlert', 1, 0] }
-          }
-        }
-      }
-    ]).toArray()
+
+    const stats = await this.collection
+      .aggregate([
+        {
+          $match: {
+            sensorId,
+            timestamp: { $gte: since },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            avg: { $avg: '$value' },
+            min: { $min: '$value' },
+            max: { $max: '$value' },
+            alertCount: {
+              $sum: { $cond: ['$isAlert', 1, 0] },
+            },
+          },
+        },
+      ])
+      .toArray()
 
     return (stats[0] as any) || { count: 0, avg: 0, min: 0, max: 0, alertCount: 0 }
   }
@@ -184,52 +190,59 @@ export class SensorReadingMongoService {
   /**
    * Obtener tendencias por horas
    */
-  async getHourlyTrends(sensorId: string, hours: number = 24): Promise<Array<{
-    hour: string
-    avgValue: number
-    minValue: number
-    maxValue: number
-    readingCount: number
-    alertCount: number
-  }>> {
+  async getHourlyTrends(
+    sensorId: string,
+    hours: number = 24
+  ): Promise<
+    Array<{
+      hour: string
+      avgValue: number
+      minValue: number
+      maxValue: number
+      readingCount: number
+      alertCount: number
+    }>
+  > {
     const since = new Date(Date.now() - hours * 60 * 60 * 1000)
-    
-    const trends = await this.collection.aggregate([
-      {
-        $match: {
-          sensorId,
-          timestamp: { $gte: since }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: {
-              format: '%Y-%m-%d %H:00',
-              date: '$timestamp'
-            }
-          },
-          avgValue: { $avg: '$value' },
-          minValue: { $min: '$value' },
-          maxValue: { $max: '$value' },
-          readingCount: { $sum: 1 },
-          alertCount: {
-            $sum: { $cond: ['$isAlert', 1, 0] }
-          }
-        }
-      },
-      {
-        $sort: { '_id': 1 }
-      }
-    ]).toArray()
 
-    return trends.map(trend => ({
+    const trends = await this.collection
+      .aggregate([
+        {
+          $match: {
+            sensorId,
+            timestamp: { $gte: since },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: '%Y-%m-%d %H:00',
+                date: '$timestamp',
+              },
+            },
+            avgValue: { $avg: '$value' },
+            minValue: { $min: '$value' },
+            maxValue: { $max: '$value' },
+            readingCount: { $sum: 1 },
+            alertCount: {
+              $sum: { $cond: ['$isAlert', 1, 0] },
+            },
+          },
+        },
+        {
+          $sort: { _id: 1 },
+        },
+      ])
+      .toArray()
+
+    return trends.map((trend) => ({
       hour: trend._id,
       avgValue: trend.avgValue,
       minValue: trend.minValue,
       maxValue: trend.maxValue,
       readingCount: trend.readingCount,
-      alertCount: trend.alertCount
+      alertCount: trend.alertCount,
     }))
   }
 
@@ -238,9 +251,9 @@ export class SensorReadingMongoService {
    */
   async cleanOldReadings(daysToKeep: number = 30): Promise<{ deletedCount: number }> {
     const cutoffDate = new Date(Date.now() - daysToKeep * 24 * 60 * 60 * 1000)
-    
+
     const result = await this.collection.deleteMany({
-      timestamp: { $lt: cutoffDate }
+      timestamp: { $lt: cutoffDate },
     })
 
     return { deletedCount: result.deletedCount }

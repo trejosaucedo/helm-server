@@ -42,7 +42,6 @@ export interface UpdateSupervisorDto {
   email?: string
 }
 
-
 export interface UserResponseDto {
   id: string
   fullName: string | null

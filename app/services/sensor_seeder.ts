@@ -57,7 +57,7 @@ export class SensorSeeder {
     ]
 
     const createdSensors = []
-    
+
     for (const sensorData of defaultSensors) {
       try {
         const sensor = await this.sensorRepository.create(sensorData)
@@ -67,7 +67,7 @@ export class SensorSeeder {
         console.error(`❌ Error creando sensor ${sensorData.name}:`, error)
       }
     }
-    
+
     return createdSensors
   }
 
@@ -77,21 +77,21 @@ export class SensorSeeder {
   async seedSensorsForAllCascos(): Promise<void> {
     try {
       console.log('🔄 Iniciando seeding de sensores...')
-      
+
       // Obtener todos los cascos activos
       const cascos = await this.cascoRepository.findAll()
-      
+
       if (cascos.length === 0) {
         console.log('⚠️  No se encontraron cascos en la base de datos')
         return
       }
 
       console.log(`� Encontrados ${cascos.length} cascos`)
-      
+
       for (const casco of cascos) {
         // Verificar si ya tiene sensores
         const existingSensors = await this.sensorRepository.findByCascoId(casco.id)
-        
+
         if (existingSensors.length === 0) {
           console.log(`🔧 Creando sensores para casco ${casco.id}`)
           await this.createDefaultSensorsForCasco(casco.id)
@@ -99,9 +99,8 @@ export class SensorSeeder {
           console.log(`✅ Casco ${casco.id} ya tiene ${existingSensors.length} sensores`)
         }
       }
-      
+
       console.log('✅ Seeding de sensores completado')
-      
     } catch (error) {
       console.error('❌ Error en seeding:', error)
     }

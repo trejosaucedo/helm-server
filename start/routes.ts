@@ -18,6 +18,8 @@ router
     router.put('/change-password', '#controllers/auth_controller.changePassword')
     // Registro de mineros (solo supervisores)
     router.post('/register-minero', '#controllers/auth_controller.registerMinero')
+    router.get('/sessions', '#controllers/auth_controller.getSessions')
+    router.delete('/sessions/:sessionId', '#controllers/auth_controller.revokeSession')
   })
   .use(middleware.auth())
 
@@ -132,7 +134,10 @@ router
 // ------------------------
 // Dispositivos IoT (sin autenticación - usan token de dispositivo)
 // ------------------------
-router.post('/cascos/:cascoId/sensores/:sensorId', '#controllers/sensor_controller.publishSensorData')
+router.post(
+  '/cascos/:cascoId/sensores/:sensorId',
+  '#controllers/sensor_controller.publishSensorData'
+)
 
 // ------------------------
 // Health Check
@@ -142,7 +147,7 @@ router.get('/health', ({ response }) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     service: 'helm-server',
-    version: '1.0.0'
+    version: '1.0.0',
   })
 })
 

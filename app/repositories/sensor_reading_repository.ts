@@ -1,5 +1,8 @@
 import { CreateSensorReadingDto, SensorReadingFiltersDto } from '#dtos/sensor.dto'
-import { SensorReadingMongoService, SensorReadingDocument } from '#services/sensor_reading_mongo_service'
+import {
+  SensorReadingMongoService,
+  SensorReadingDocument,
+} from '#services/sensor_reading_mongo_service'
 
 export class SensorReadingRepository {
   private mongoService: SensorReadingMongoService
@@ -20,14 +23,16 @@ export class SensorReadingRepository {
     // Para MongoDB, necesitamos usar ObjectId si es un ID válido
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
-    
-    const readings = await this.mongoService.getReadingsByDateRange(yesterday, tomorrow, { sensorId: id })
+
+    const readings = await this.mongoService.getReadingsByDateRange(yesterday, tomorrow, {
+      sensorId: id,
+    })
     return readings.length > 0 ? readings[0] : null
   }
 
   async create(data: CreateSensorReadingDto): Promise<SensorReadingDocument> {
     const timestamp = data.timestamp ? new Date(data.timestamp) : new Date()
-    
+
     return await this.mongoService.insertReading({
       sensorId: data.sensorId,
       cascoId: data.cascoId,
@@ -46,7 +51,7 @@ export class SensorReadingRepository {
   }
 
   async createMany(readings: CreateSensorReadingDto[]): Promise<void> {
-    const mongoReadings = readings.map(data => ({
+    const mongoReadings = readings.map((data) => ({
       sensorId: data.sensorId,
       cascoId: data.cascoId,
       mineroId: data.mineroId,
@@ -61,7 +66,7 @@ export class SensorReadingRepository {
       isNormal: true,
       isAlert: false,
     }))
-    
+
     await this.mongoService.insertManyReadings(mongoReadings)
   }
 
@@ -72,28 +77,28 @@ export class SensorReadingRepository {
   async findByMineroId(mineroId: string, limit: number = 100): Promise<SensorReadingDocument[]> {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
-    
+
     return await this.mongoService.getReadingsByDateRange(yesterday, tomorrow, { mineroId, limit })
   }
 
   async findByCascoId(cascoId: string, limit: number = 100): Promise<SensorReadingDocument[]> {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
-    
+
     return await this.mongoService.getReadingsByDateRange(yesterday, tomorrow, { cascoId, limit })
   }
 
   async findWithFilters(filters: SensorReadingFiltersDto): Promise<SensorReadingDocument[]> {
     const mongoFilters: any = {}
-    
+
     if (filters.cascoId) {
       mongoFilters.cascoId = filters.cascoId
     }
-    
+
     if (filters.mineroId) {
       mongoFilters.mineroId = filters.mineroId
     }
-    
+
     if (filters.isAlert !== undefined) {
       mongoFilters.alertsOnly = filters.isAlert
     }
@@ -102,25 +107,30 @@ export class SensorReadingRepository {
       mongoFilters.limit = filters.limit
     }
 
-    const startDate = filters.startDate ? new Date(filters.startDate) : new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const startDate = filters.startDate
+      ? new Date(filters.startDate)
+      : new Date(Date.now() - 24 * 60 * 60 * 1000)
     const endDate = filters.endDate ? new Date(filters.endDate) : new Date()
 
     return await this.mongoService.getReadingsByDateRange(startDate, endDate, mongoFilters)
   }
 
-  async getRecentReadings(mineroId: string, minutes: number = 30): Promise<SensorReadingDocument[]> {
+  async getRecentReadings(
+    mineroId: string,
+    minutes: number = 30
+  ): Promise<SensorReadingDocument[]> {
     const since = new Date(Date.now() - minutes * 60 * 1000)
     const now = new Date()
-    
+
     return await this.mongoService.getReadingsByDateRange(since, now, { mineroId })
   }
 
   async getAlertReadings(cascoId: string, hours: number = 24): Promise<SensorReadingDocument[]> {
     const since = new Date(Date.now() - hours * 60 * 60 * 1000)
-    
+
     return await this.mongoService.getAlertReadings({
       cascoId,
-      since: since
+      since: since,
     })
   }
 
@@ -129,7 +139,11 @@ export class SensorReadingRepository {
     return readings.length > 0 ? readings[0] : null
   }
 
-  async updateAlertStatus(id: string, isAlert: boolean, isNormal: boolean): Promise<SensorReadingDocument | null> {
+  async updateAlertStatus(
+    id: string,
+    isAlert: boolean,
+    isNormal: boolean
+  ): Promise<SensorReadingDocument | null> {
     // MongoDB no soporta actualizaciones fáciles sin tener el objeto completo
     // En la práctica, las lecturas de sensores son inmutables una vez creadas
     const reading = await this.findById(id)
@@ -139,11 +153,14 @@ export class SensorReadingRepository {
     return {
       ...reading,
       isAlert,
-      isNormal
+      isNormal,
     }
   }
 
-  async getSensorStats(sensorId: string, hours: number = 24): Promise<{
+  async getSensorStats(
+    sensorId: string,
+    hours: number = 24
+  ): Promise<{
     avgValue: number
     minValue: number
     maxValue: number
@@ -151,13 +168,13 @@ export class SensorReadingRepository {
     alertCount: number
   }> {
     const stats = await this.mongoService.getSensorStats(sensorId, hours)
-    
+
     return {
       avgValue: stats.avg,
       minValue: stats.min,
       maxValue: stats.max,
       readingCount: stats.count,
-      alertCount: stats.alertCount
+      alertCount: stats.alertCount,
     }
   }
 }

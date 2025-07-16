@@ -47,7 +47,7 @@ export class SensorService {
    */
   async getSensorsByCasco(cascoId: string): Promise<SensorResponseDto[]> {
     const sensors = await this.sensorRepository.findByCascoId(cascoId)
-    return sensors.map(sensor => this.mapSensorToResponse(sensor))
+    return sensors.map((sensor) => this.mapSensorToResponse(sensor))
   }
 
   /**
@@ -55,7 +55,7 @@ export class SensorService {
    */
   async getSensorsByMinero(mineroId: string): Promise<SensorResponseDto[]> {
     const sensors = await this.sensorRepository.findByMineroId(mineroId)
-    return sensors.map(sensor => this.mapSensorToResponse(sensor))
+    return sensors.map((sensor) => this.mapSensorToResponse(sensor))
   }
 
   /**
@@ -64,7 +64,7 @@ export class SensorService {
   async createSensorReading(data: CreateSensorReadingDto): Promise<SensorReadingDocument> {
     // Conectar a MongoDB
     await this.connect()
-    
+
     try {
       // Obtener información del sensor para validar rangos
       const sensor = await this.sensorRepository.findById(data.sensorId)
@@ -81,8 +81,10 @@ export class SensorService {
         ...data,
         isNormal,
         isAlert,
-        timestamp: data.timestamp ? 
-          (typeof data.timestamp === 'string' ? new Date(data.timestamp) : data.timestamp) 
+        timestamp: data.timestamp
+          ? typeof data.timestamp === 'string'
+            ? new Date(data.timestamp)
+            : data.timestamp
           : new Date(),
       }
 
@@ -113,7 +115,7 @@ export class SensorService {
     await this.connect()
     try {
       const results: SensorReadingDocument[] = []
-      
+
       for (const readingData of readings) {
         try {
           const reading = await this.createSensorReading(readingData)
@@ -123,7 +125,7 @@ export class SensorService {
           // Continuar con las demás lecturas
         }
       }
-      
+
       return results
     } finally {
       await this.disconnect()
@@ -157,7 +159,7 @@ export class SensorService {
         readingCount: stats.readingCount,
         alertCount: stats.alertCount,
         lastReading: new Date().toISOString(), // Placeholder por ahora
-        trend: 'stable' // Placeholder por ahora
+        trend: 'stable', // Placeholder por ahora
       }
     } finally {
       await this.disconnect()
@@ -201,7 +203,11 @@ export class SensorService {
     }
 
     // Para la mayoría de sensores, alerta si supera el umbral
-    if (sensor.type === 'heart_rate' || sensor.type === 'body_temperature' || sensor.type === 'gas') {
+    if (
+      sensor.type === 'heart_rate' ||
+      sensor.type === 'body_temperature' ||
+      sensor.type === 'gas'
+    ) {
       return value > sensor.alertThreshold
     }
 
@@ -211,7 +217,10 @@ export class SensorService {
   /**
    * Generar notificación automática para alerta
    */
-  private async generateAlertNotification(reading: SensorReadingDocument, sensor: Sensor): Promise<void> {
+  private async generateAlertNotification(
+    reading: SensorReadingDocument,
+    sensor: Sensor
+  ): Promise<void> {
     try {
       // Obtener información del minero si existe
       const mineroId = reading.mineroId
@@ -225,7 +234,7 @@ export class SensorService {
         threshold: sensor.alertThreshold,
         timestamp: reading.timestamp,
         cascoId: reading.cascoId,
-        location: reading.location
+        location: reading.location,
       }
 
       await this.notificationService.sendNotification({
@@ -235,7 +244,7 @@ export class SensorService {
         message: `Valor crítico detectado: ${reading.value}${reading.unit}`,
         priority: 'critical',
         data: alertData,
-        deliveryChannels: ['database', 'email', 'push']
+        deliveryChannels: ['database', 'email', 'push'],
       })
 
       console.log(`🚨 Alerta generada para sensor ${sensor.name}: ${reading.value}${reading.unit}`)
@@ -260,7 +269,7 @@ export class SensorService {
       sampleRate: sensor.sampleRate,
       alertThreshold: sensor.alertThreshold,
       createdAt: sensor.createdAt?.toISO() || new Date().toISOString(),
-      updatedAt: sensor.updatedAt?.toISO() || null
+      updatedAt: sensor.updatedAt?.toISO() || null,
     }
   }
 
@@ -279,7 +288,10 @@ export class SensorService {
   /**
    * Obtener lecturas recientes de un minero
    */
-  async getRecentReadings(mineroId: string, minutes: number = 30): Promise<SensorReadingDocument[]> {
+  async getRecentReadings(
+    mineroId: string,
+    minutes: number = 30
+  ): Promise<SensorReadingDocument[]> {
     await this.connect()
     try {
       return await this.readingRepository.getRecentReadings(mineroId, minutes)
@@ -292,27 +304,32 @@ export class SensorService {
    * Publicar datos de sensor desde dispositivo IoT
    * Guarda en MongoDB, Redis y emite por WebSocket
    */
-  async publishSensorData({ cascoId, sensorId, data, deviceToken }: {
+  async publishSensorData({
+    cascoId,
+    sensorId,
+    data,
+    deviceToken,
+  }: {
     cascoId: string
     sensorId: string
     data: any
     deviceToken: string
   }): Promise<void> {
     await this.connect()
-    
+
     try {
       // 1. Validar token del dispositivo
       await this.validateDeviceToken(deviceToken, cascoId)
-      
+
       // 2. Validar que el sensor existe
       const sensor = await this.sensorRepository.findById(sensorId)
       if (!sensor) {
         throw new Error(`Sensor ${sensorId} no encontrado`)
       }
-      
+
       // 3. Procesar y normalizar los datos
       const normalizedData = this.normalizeSensorData(data, sensor)
-      
+
       // 4. Guardar en MongoDB (histórico)
       await this.readingRepository.create({
         sensorId,
@@ -324,17 +341,16 @@ export class SensorService {
         signalStrength: normalizedData.signalStrength,
         location: normalizedData.location,
         metadata: normalizedData.metadata,
-        timestamp: new Date()
+        timestamp: new Date(),
       })
-      
+
       // 5. Guardar en Redis (cache últimos 5 minutos)
       await this.saveToRedisCache(cascoId, sensorId, normalizedData)
-      
+
       // 6. Emitir por WebSocket
       await this.emitSensorData(cascoId, sensorId, normalizedData)
-      
+
       console.log(`📡 Datos publicados para sensor ${sensorId} en casco ${cascoId}`)
-      
     } finally {
       await this.disconnect()
     }
@@ -365,8 +381,8 @@ export class SensorService {
         ...data.metadata,
         deviceId: data.deviceId,
         firmware: data.firmware,
-        receivedAt: new Date().toISOString()
-      }
+        receivedAt: new Date().toISOString(),
+      },
     }
   }
 
@@ -407,47 +423,50 @@ export class SensorService {
   /**
    * Validar que un sensor específico existe en un casco específico
    */
-  async validateSensorInCasco(sensorId: string, cascoId: string): Promise<{
+  async validateSensorInCasco(
+    sensorId: string,
+    cascoId: string
+  ): Promise<{
     isValid: boolean
     message: string
   }> {
     try {
       // Buscar el sensor por ID
       const sensor = await this.sensorRepository.findById(sensorId)
-      
+
       // Verificar que el sensor existe
       if (!sensor) {
         return {
           isValid: false,
-          message: `Sensor ${sensorId} no encontrado`
+          message: `Sensor ${sensorId} no encontrado`,
         }
       }
-      
+
       // Verificar que el sensor pertenece al casco especificado
       if (sensor.cascoId !== cascoId) {
         return {
           isValid: false,
-          message: `Sensor ${sensorId} no pertenece al casco ${cascoId}`
+          message: `Sensor ${sensorId} no pertenece al casco ${cascoId}`,
         }
       }
-      
+
       // Verificar que el sensor esté activo
       if (!sensor.isActive) {
         return {
           isValid: false,
-          message: `Sensor ${sensorId} está inactivo`
+          message: `Sensor ${sensorId} está inactivo`,
         }
       }
-      
+
       return {
         isValid: true,
-        message: 'Sensor válido'
+        message: 'Sensor válido',
       }
     } catch (error) {
       console.error('Error validando sensor en casco:', error)
       return {
         isValid: false,
-        message: 'Error interno validando sensor'
+        message: 'Error interno validando sensor',
       }
     }
   }

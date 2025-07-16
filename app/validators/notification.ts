@@ -1,4 +1,3 @@
-
 import vine from '@vinejs/vine'
 
 /**
@@ -21,17 +20,20 @@ export const createNotificationValidator = vine.compile(
  */
 export const bulkCreateValidator = vine.compile(
   vine.object({
-    notifications: vine.array(
-      vine.object({
-        userId: vine.string().uuid(),
-        type: vine.enum(['general', 'sensor', 'supervisor']),
-        title: vine.string().minLength(1).maxLength(255),
-        message: vine.string().minLength(1).maxLength(1000),
-        priority: vine.enum(['low', 'medium', 'high', 'critical']).optional(),
-        deliveryChannels: vine.array(vine.enum(['database', 'email', 'push'])).optional(),
-        data: vine.any().optional(),
-      })
-    ).minLength(1).maxLength(100)
+    notifications: vine
+      .array(
+        vine.object({
+          userId: vine.string().uuid(),
+          type: vine.enum(['general', 'sensor', 'supervisor']),
+          title: vine.string().minLength(1).maxLength(255),
+          message: vine.string().minLength(1).maxLength(1000),
+          priority: vine.enum(['low', 'medium', 'high', 'critical']).optional(),
+          deliveryChannels: vine.array(vine.enum(['database', 'email', 'push'])).optional(),
+          data: vine.any().optional(),
+        })
+      )
+      .minLength(1)
+      .maxLength(100),
   })
 )
 

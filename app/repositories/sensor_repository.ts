@@ -7,15 +7,11 @@ export class SensorRepository {
   }
 
   async findByCascoId(cascoId: string): Promise<Sensor[]> {
-    return await Sensor.query()
-      .where('casco_id', cascoId)
-      .orderBy('type')
+    return await Sensor.query().where('casco_id', cascoId).orderBy('type')
   }
 
   async findByType(type: 'gps' | 'heart_rate' | 'body_temperature' | 'gas'): Promise<Sensor[]> {
-    return await Sensor.query()
-      .where('type', type)
-      .where('is_active', true)
+    return await Sensor.query().where('type', type).where('is_active', true)
   }
 
   async create(data: CreateSensorDto): Promise<Sensor> {
@@ -77,10 +73,7 @@ export class SensorRepository {
   }
 
   async getActiveSensorsByCasco(cascoId: string): Promise<Sensor[]> {
-    return await Sensor.query()
-      .where('casco_id', cascoId)
-      .where('is_active', true)
-      .orderBy('type')
+    return await Sensor.query().where('casco_id', cascoId).where('is_active', true).orderBy('type')
   }
 
   async getSensorsByMinero(mineroId: string): Promise<Sensor[]> {

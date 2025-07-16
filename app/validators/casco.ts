@@ -8,8 +8,8 @@ export const activateCascoValidator = vine.compile(
 
 export const assignCascoValidator = vine.compile(
   vine.object({
-    cascoId:   vine.string().trim(),
-    mineroId:  vine.string().trim(),
+    cascoId: vine.string().trim(),
+    mineroId: vine.string().trim(),
   })
 )
 

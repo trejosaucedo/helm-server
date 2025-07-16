@@ -62,13 +62,13 @@ export class EmailService {
       low: 'Baja',
       medium: 'Media',
       high: 'Alta',
-      critical: 'Crítica'
+      critical: 'Crítica',
     }
 
     const typeLabels = {
       general: 'General',
       sensor: 'Sensor',
-      supervisor: 'Supervisor'
+      supervisor: 'Supervisor',
     }
 
     console.log('=== EMAIL NOTIFICACIÓN ===')
@@ -82,14 +82,18 @@ export class EmailService {
     console.log(``)
     console.log(`${notification.message}`)
     console.log(``)
-    
+
     // Mostrar datos adicionales si existen
     if (notification.data) {
       console.log(`Información adicional:`)
       if (notification.type === 'sensor' && notification.getData()?.sensorType) {
         console.log(`- Sensor: ${notification.getData().sensorType}`)
-        console.log(`- Valor registrado: ${notification.getData().value}${notification.getData().unit}`)
-        console.log(`- Límite seguro: ${notification.getData().threshold}${notification.getData().unit}`)
+        console.log(
+          `- Valor registrado: ${notification.getData().value}${notification.getData().unit}`
+        )
+        console.log(
+          `- Límite seguro: ${notification.getData().threshold}${notification.getData().unit}`
+        )
         console.log(`- Hora: ${new Date(notification.getData().timestamp).toLocaleString('es-MX')}`)
       } else {
         console.log(`- Datos: ${JSON.stringify(notification.data, null, 2)}`)
@@ -194,13 +198,15 @@ export class EmailService {
     console.log(``)
     console.log(`Fecha: ${notification.createdAt.toFormat('dd/MM/yyyy HH:mm:ss')}`)
     console.log(``)
-    
+
     if (notification.data && notification.type === 'sensor') {
       console.log(`DETALLES DEL SENSOR:`)
       console.log(`- Sensor: ${notification.getData().sensorType}`)
       console.log(`- Valor: ${notification.getData().value}${notification.getData().unit}`)
       console.log(`- Límite: ${notification.getData().threshold}${notification.getData().unit}`)
-      console.log(`- Desviación: ${(Math.abs(notification.getData().value - notification.getData().threshold) / notification.getData().threshold * 100).toFixed(1)}%`)
+      console.log(
+        `- Desviación: ${((Math.abs(notification.getData().value - notification.getData().threshold) / notification.getData().threshold) * 100).toFixed(1)}%`
+      )
       console.log(``)
     }
 
@@ -231,7 +237,7 @@ export class EmailService {
     console.log(``)
     console.log(`Tu cuenta ha sido creada con el rol de: ${role}`)
     console.log(``)
-    
+
     if (temporaryPassword) {
       console.log(`CREDENCIALES DE ACCESO:`)
       console.log(`Email: ${email}`)
@@ -245,12 +251,12 @@ export class EmailService {
     console.log(`- Recibir notificaciones del sistema`)
     console.log(`- Monitorear alertas de sensores`)
     console.log(`- Gestionar tu perfil`)
-    
+
     if (role === 'supervisor' || role === 'admin') {
       console.log(`- Enviar notificaciones a otros usuarios`)
       console.log(`- Supervisar equipos de trabajo`)
     }
-    
+
     if (role === 'admin') {
       console.log(`- Administrar usuarios del sistema`)
       console.log(`- Configurar parámetros del sistema`)
@@ -325,7 +331,7 @@ export class EmailService {
     console.log(`- Mensaje: ${notification.message}`)
     console.log(`- Fecha de creación: ${notification.createdAt.toFormat('dd/MM/yyyy HH:mm:ss')}`)
     console.log(``)
-    
+
     if (errorComment) {
       console.log(`COMENTARIO DEL USUARIO:`)
       console.log(`"${errorComment}"`)
@@ -356,12 +362,12 @@ export class EmailService {
     console.log(`Contenido HTML:`)
     console.log(htmlContent)
     console.log(``)
-    
+
     if (textContent) {
       console.log(`Contenido Texto:`)
       console.log(textContent)
     }
-    
+
     console.log('===========================')
 
     await new Promise((resolve) => setTimeout(resolve, 100))

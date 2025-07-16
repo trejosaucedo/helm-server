@@ -461,10 +461,7 @@
         "token": ""
       },
       "dataPropertyOrder": {
-        "&": [
-          "base_url",
-          "token"
-        ]
+        "&": ["base_url", "token"]
       },
       "color": null,
       "isPrivate": false,

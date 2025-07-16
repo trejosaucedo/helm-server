@@ -1,6 +1,10 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { CascoService } from '#services/casco_service'
-import {activateCascoValidator,assignCascoValidator,createCascoValidator,} from '#validators/casco'
+import {
+  activateCascoValidator,
+  assignCascoValidator,
+  createCascoValidator,
+} from '#validators/casco'
 import { ErrorHandler } from '#utils/error_handler'
 import db from '@adonisjs/lucid/services/db'
 
@@ -144,10 +148,10 @@ export default class CascoController {
   async create({ request, response, user }: HttpContext) {
     try {
       const payload = await request.validateUsing(createCascoValidator)
-      
+
       // Si no se proporciona supervisorId, usar el usuario autenticado
       const supervisorId = payload.supervisorId || user?.id
-      
+
       const newCasco = await this.cascoService.createCascoAdmin({
         serial: payload.physicalId, // Usar physicalId como serial por defecto
         physicalId: payload.physicalId,
@@ -170,7 +174,7 @@ export default class CascoController {
     try {
       // Eliminar todos los cascos para limpiar registros corruptos
       await db.from('cascos').delete()
-      
+
       return response.ok({
         success: true,
         message: 'Tabla cascos limpiada exitosamente',

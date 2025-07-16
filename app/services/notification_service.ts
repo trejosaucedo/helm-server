@@ -1,4 +1,7 @@
-import { NotificationRepository, CreateNotificationAttrs } from '#repositories/notification_repository'
+import {
+  NotificationRepository,
+  CreateNotificationAttrs,
+} from '#repositories/notification_repository'
 import Notification from '#models/notification'
 import { EmailService } from '#services/email_service'
 import { PushService } from '#services/push_service'
@@ -88,9 +91,7 @@ export class NotificationService {
     return this.sendBulkNotifications(payloads)
   }
 
-
   // Métodos de lectura / estado
-
 
   public async getUserNotifications(
     userId: string,
@@ -108,9 +109,7 @@ export class NotificationService {
     return this.repo.getStats(userId)
   }
 
-
   // Métodos de marcado / borrado
-
 
   public async markAsRead(notificationId: string, userId: string): Promise<void> {
     await this.repo.markAsRead(notificationId, userId)
@@ -124,33 +123,33 @@ export class NotificationService {
    * Marca notificación como errónea (feedback usuario) y notifica al admin.
    */
   public async markAsError(
-  notificationId: string,
-  userId: string,
-  comment?: string
-): Promise<void> {
-  // 1. Registrar el error en BD
-  await this.repo.markAsError(notificationId, userId, comment)
+    notificationId: string,
+    userId: string,
+    comment?: string
+  ): Promise<void> {
+    // 1. Registrar el error en BD
+    await this.repo.markAsError(notificationId, userId, comment)
 
-  // 2. Recuperar la notificación para el reporte
-  const notification = await this.repo.findById(notificationId)
+    // 2. Recuperar la notificación para el reporte
+    const notification = await this.repo.findById(notificationId)
 
-  // 3. Validar que exista
-  if (!notification) {
-    throw new Error(`Notification with id ${notificationId} not found`)
+    // 3. Validar que exista
+    if (!notification) {
+      throw new Error(`Notification with id ${notificationId} not found`)
+    }
+
+    // 4. Avisar al admin por email
+    try {
+      await this.emailService.sendErrorReportNotification(
+        ADMIN_EMAIL,
+        userId,
+        notification,
+        comment
+      )
+    } catch (err) {
+      console.error('Error enviando reporte de notificación errónea:', err)
+    }
   }
-
-  // 4. Avisar al admin por email
-  try {
-    await this.emailService.sendErrorReportNotification(
-      ADMIN_EMAIL,
-      userId,
-      notification,
-      comment
-    )
-  } catch (err) {
-    console.error('Error enviando reporte de notificación errónea:', err)
-  }
-}
 
   public async deleteNotification(notificationId: string, userId: string): Promise<void> {
     await this.repo.delete(notificationId, userId)
@@ -197,9 +196,7 @@ export class NotificationService {
     return 'low'
   }
 
-
   // Procesamiento batch (scheduler)
-
 
   /**
    * Procesa notificaciones pendientes de email y push (invocado desde un Job).

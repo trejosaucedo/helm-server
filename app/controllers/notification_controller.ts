@@ -1,12 +1,12 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { CreateNotificationDTO } from '#services/notification_service'
 import { NotificationService } from '#services/notification_service'
-import { 
-  createNotificationValidator, 
-  paginationValidator, 
+import {
+  createNotificationValidator,
+  paginationValidator,
   idParamsValidator,
   markAsErrorValidator,
-  bulkCreateValidator
+  bulkCreateValidator,
 } from '#validators/notification'
 
 export default class NotificationController {
@@ -22,14 +22,14 @@ export default class NotificationController {
 
     const filters = {
       type: type || undefined,
-      isRead: isRead !== undefined ? isRead : undefined
+      isRead: isRead !== undefined ? isRead : undefined,
     }
 
     const notifications = await this.service.getUserNotifications(userId, { page, limit }, filters)
 
     return response.ok({
       success: true,
-      data: notifications
+      data: notifications,
     })
   }
 
@@ -43,17 +43,19 @@ export default class NotificationController {
     if (!['admin', 'supervisor'].includes(user.role)) {
       return response.forbidden({
         success: false,
-        message: 'Solo administradores y supervisores pueden crear notificaciones'
+        message: 'Solo administradores y supervisores pueden crear notificaciones',
       })
     }
 
-    const attrs = await request.validateUsing(createNotificationValidator) as CreateNotificationDTO
+    const attrs = (await request.validateUsing(
+      createNotificationValidator
+    )) as CreateNotificationDTO
 
     const notification = await this.service.sendNotification(attrs)
 
     return response.created({
       success: true,
-      data: notification
+      data: notification,
     })
   }
 
@@ -67,7 +69,7 @@ export default class NotificationController {
     if (!['admin', 'supervisor'].includes(user.role)) {
       return response.forbidden({
         success: false,
-        message: 'Solo administradores y supervisores pueden crear notificaciones'
+        message: 'Solo administradores y supervisores pueden crear notificaciones',
       })
     }
 
@@ -77,7 +79,7 @@ export default class NotificationController {
 
     return response.created({
       success: true,
-      data: createdNotifications
+      data: createdNotifications,
     })
   }
 
@@ -92,7 +94,7 @@ export default class NotificationController {
     await this.service.markAsRead(id, userId)
 
     return response.ok({
-      success: true
+      success: true,
     })
   }
 
@@ -109,7 +111,7 @@ export default class NotificationController {
 
     return response.ok({
       success: true,
-      message: 'Notificación marcada como errónea. Gracias por tu feedback.'
+      message: 'Notificación marcada como errónea. Gracias por tu feedback.',
     })
   }
 
@@ -123,7 +125,7 @@ export default class NotificationController {
     await this.service.markAllAsRead(userId)
 
     return response.ok({
-      success: true
+      success: true,
     })
   }
 
@@ -163,7 +165,7 @@ export default class NotificationController {
 
     return response.ok({
       success: true,
-      data: { unreadCount: count }
+      data: { unreadCount: count },
     })
   }
 
@@ -178,7 +180,7 @@ export default class NotificationController {
 
     return response.ok({
       success: true,
-      data: stats
+      data: stats,
     })
   }
 }

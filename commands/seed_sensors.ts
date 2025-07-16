@@ -10,21 +10,21 @@ export default class SeedSensors extends BaseCommand {
     startApp: true, // Necesario para acceder a la base de datos
   }
 
-  @args.string({ 
+  @args.string({
     description: 'ID del casco específico (opcional)',
-    required: false 
+    required: false,
   })
   declare cascoId?: string
 
-  @flags.boolean({ 
+  @flags.boolean({
     description: 'Ejecutar para todos los cascos existentes',
-    alias: 'a'
+    alias: 'a',
   })
   declare all: boolean
 
-  @flags.boolean({ 
+  @flags.boolean({
     description: 'Forzar creación incluso si ya existen sensores',
-    alias: 'f'
+    alias: 'f',
   })
   declare force: boolean
 
@@ -39,13 +39,11 @@ export default class SeedSensors extends BaseCommand {
         this.logger.info(`📦 Creando sensores para casco: ${this.cascoId}`)
         await seeder.createDefaultSensorsForCasco(this.cascoId)
         this.logger.success(`✅ Sensores creados para casco ${this.cascoId}`)
-      
       } else if (this.all) {
         // Seed para todos los cascos
         this.logger.info('📦 Creando sensores para todos los cascos...')
         await seeder.seedSensorsForAllCascos()
         this.logger.success('✅ Seeding completado para todos los cascos')
-      
       } else {
         // Mostrar ayuda
         this.logger.info('📖 Uso del comando:')
@@ -54,7 +52,6 @@ export default class SeedSensors extends BaseCommand {
         this.logger.info('  node ace seed:sensors --force --all  # Forzar para todos')
         return
       }
-
     } catch (error) {
       this.logger.error('❌ Error durante el seeding:')
       this.logger.error(error.message)

@@ -23,7 +23,10 @@ export class CascoService {
     return this.mapCascoToResponse(casco)
   }
 
-  async activateCascoByPhysicalId(supervisorId: string, physicalId: string): Promise<CascoResponseDto> {
+  async activateCascoByPhysicalId(
+    supervisorId: string,
+    physicalId: string
+  ): Promise<CascoResponseDto> {
     // Verificar que el casco existe en el sistema
     const cascoExists = await this.cascoRepository.cascoExistsByPhysicalId(physicalId)
     if (!cascoExists) {

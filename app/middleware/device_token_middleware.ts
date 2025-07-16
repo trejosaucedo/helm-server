@@ -7,11 +7,11 @@ import type { NextFn } from '@adonisjs/core/types/http'
 export default class DeviceTokenMiddleware {
   async handle(ctx: HttpContext, next: NextFn) {
     const deviceToken = ctx.request.header('x-device-token')
-    
+
     if (!deviceToken) {
       return ctx.response.status(401).json({
         success: false,
-        message: 'Token de dispositivo requerido'
+        message: 'Token de dispositivo requerido',
       })
     }
 
@@ -19,7 +19,7 @@ export default class DeviceTokenMiddleware {
     if (deviceToken.length < 10) {
       return ctx.response.status(401).json({
         success: false,
-        message: 'Token de dispositivo inválido'
+        message: 'Token de dispositivo inválido',
       })
     }
 

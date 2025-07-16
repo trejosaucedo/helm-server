@@ -108,6 +108,4 @@ export default class AuthController {
     TokenUtils.clearAuthCookies(response)
     return TokenUtils.successResponse(response, 'Todas las sesiones cerradas exitosamente')
   })
-
-
 }

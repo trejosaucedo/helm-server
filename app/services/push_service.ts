@@ -53,7 +53,7 @@ export class PushService {
       apnsTeamId: process.env.APNS_TEAM_ID || '',
       apnsPrivateKey: process.env.APNS_PRIVATE_KEY || '',
       apnsBundleId: process.env.APNS_BUNDLE_ID || 'com.mining.system',
-      environment: (process.env.NODE_ENV === 'production') ? 'production' : 'development'
+      environment: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     }
   }
 
@@ -77,12 +77,14 @@ export class PushService {
 
       const payload = this.buildNotificationPayload(notification, user)
       const results = await this.sendToMultipleDevices(deviceTokens, payload)
-      
+
       // Contar éxitos
-      const successCount = results.filter(r => r.success).length
+      const successCount = results.filter((r) => r.success).length
       const totalCount = results.length
 
-      console.log(`Push enviado a ${successCount}/${totalCount} dispositivos para notificación ${notification.id}`)
+      console.log(
+        `Push enviado a ${successCount}/${totalCount} dispositivos para notificación ${notification.id}`
+      )
 
       // Limpiar tokens inválidos
       await this.cleanupFailedTokens(deviceTokens, results)
@@ -111,7 +113,7 @@ export class PushService {
   ): Promise<boolean> {
     try {
       const deviceTokens = await this.getUserDeviceTokens(userId)
-      
+
       if (deviceTokens.length === 0) {
         console.log(`Usuario ${userId} no tiene dispositivos registrados`)
         return false
@@ -124,13 +126,15 @@ export class PushService {
         priority: options?.priority || 'normal',
         sound: options?.sound || 'default',
         badge: options?.badge,
-        category: options?.category
+        category: options?.category,
       }
 
       const results = await this.sendToMultipleDevices(deviceTokens, payload)
-      const successCount = results.filter(r => r.success).length
+      const successCount = results.filter((r) => r.success).length
 
-      console.log(`Push personalizado enviado a ${successCount}/${deviceTokens.length} dispositivos`)
+      console.log(
+        `Push personalizado enviado a ${successCount}/${deviceTokens.length} dispositivos`
+      )
 
       await this.cleanupFailedTokens(deviceTokens, results)
       return successCount > 0
@@ -153,7 +157,7 @@ export class PushService {
   ): Promise<boolean> {
     const title = `🚨 ALERTA CRÍTICA - ${sensorType}`
     const body = `${sensorType}: ${value}${unit} (Límite: ${threshold}${unit})`
-    
+
     const data = {
       type: 'sensor_alert',
       sensorType,
@@ -162,13 +166,13 @@ export class PushService {
       unit,
       location: location || 'No especificada',
       timestamp: new Date().toISOString(),
-      severity: 'critical'
+      severity: 'critical',
     }
 
     return this.sendCustomPush(userId, title, body, data, {
       priority: 'high',
       sound: 'alarm.wav',
-      category: 'SENSOR_ALERT'
+      category: 'SENSOR_ALERT',
     })
   }
 
@@ -183,7 +187,7 @@ export class PushService {
   ): Promise<{ success: number; failed: number }> {
     const supervisor = await User.find(supervisorId)
     const finalTitle = title || `Mensaje de ${supervisor?.fullName || 'Supervisor'}`
-    
+
     let successCount = 0
     let failedCount = 0
 
@@ -191,7 +195,7 @@ export class PushService {
       type: 'supervisor_message',
       supervisorId,
       supervisorName: supervisor?.fullName || 'Supervisor',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     }
 
     for (const userId of targetUserIds) {
@@ -199,9 +203,9 @@ export class PushService {
         const sent = await this.sendCustomPush(userId, finalTitle, message, data, {
           priority: 'high',
           sound: 'supervisor.wav',
-          category: 'SUPERVISOR_MESSAGE'
+          category: 'SUPERVISOR_MESSAGE',
         })
-        
+
         if (sent) successCount++
         else failedCount++
       } catch (error) {
@@ -224,13 +228,13 @@ export class PushService {
   ): Promise<{ success: number; failed: number }> {
     try {
       const allActiveTokens = await this.getAllActiveDeviceTokens()
-      
+
       const data = {
         type: 'emergency',
         emergencyType,
         location: location || 'No especificada',
         timestamp: new Date().toISOString(),
-        requiresAcknowledgment: true
+        requiresAcknowledgment: true,
       }
 
       const payload: PushPayload = {
@@ -239,11 +243,11 @@ export class PushService {
         data,
         priority: 'high',
         sound: 'emergency.wav',
-        category: 'EMERGENCY'
+        category: 'EMERGENCY',
       }
 
       const results = await this.sendToMultipleDevices(allActiveTokens, payload)
-      const successCount = results.filter(r => r.success).length
+      const successCount = results.filter((r) => r.success).length
       const failedCount = results.length - successCount
 
       console.log(`Emergencia enviada a ${successCount}/${allActiveTokens.length} dispositivos`)
@@ -266,15 +270,15 @@ export class PushService {
       low: { priority: 'normal' as const, sound: 'default' },
       medium: { priority: 'normal' as const, sound: 'default' },
       high: { priority: 'high' as const, sound: 'alert.wav' },
-      critical: { priority: 'high' as const, sound: 'alarm.wav' }
+      critical: { priority: 'high' as const, sound: 'alarm.wav' },
     }
 
     const config = priorityConfig[notification.priority]
-    
+
     // Personalizar título y mensaje según el tipo
     let title = notification.title
     let body = notification.message
-    
+
     if (notification.type === 'sensor') {
       title = `⚠️ ${notification.title}`
       if (notification.getData()?.sensorType) {
@@ -289,7 +293,7 @@ export class PushService {
       type: notification.type,
       priority: notification.priority,
       timestamp: notification.createdAt.toISO(),
-      ...notification.getData()
+      ...notification.getData(),
     }
 
     return {
@@ -298,7 +302,7 @@ export class PushService {
       data,
       priority: config.priority,
       sound: config.sound,
-      category: this.getCategoryForNotification(notification)
+      category: this.getCategoryForNotification(notification),
     }
   }
 
@@ -309,9 +313,9 @@ export class PushService {
     const categories = {
       sensor: 'SENSOR_ALERT',
       supervisor: 'SUPERVISOR_MESSAGE',
-      general: 'GENERAL_NOTIFICATION'
+      general: 'GENERAL_NOTIFICATION',
     }
-    
+
     return categories[notification.type] || 'GENERAL_NOTIFICATION'
   }
 
@@ -327,19 +331,19 @@ export class PushService {
     for (const device of deviceTokens) {
       try {
         let result: PushResult
-        
+
         if (device.platform === 'android') {
           result = await this.sendFCMPush(device.token, payload)
         } else {
           result = await this.sendAPNSPush(device.token, payload)
         }
-        
+
         results.push(result)
       } catch (error) {
         console.error(`Error enviando push a dispositivo ${device.token}:`, error)
         results.push({
           success: false,
-          error: error instanceof Error ? error.message : 'Error desconocido'
+          error: error instanceof Error ? error.message : 'Error desconocido',
         })
       }
     }
@@ -363,9 +367,9 @@ export class PushService {
         body: payload.body,
         sound: payload.sound || 'default',
         badge: payload.badge?.toString(),
-        click_action: 'FLUTTER_NOTIFICATION_CLICK'
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
       },
-      data: payload.data || {}
+      data: payload.data || {},
     }
 
     try {
@@ -373,9 +377,9 @@ export class PushService {
         method: 'POST',
         headers: {
           'Authorization': `key=${this.config.fcmServerKey}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(fcmPayload)
+        body: JSON.stringify(fcmPayload),
       })
 
       const result = await response.json()
@@ -383,19 +387,19 @@ export class PushService {
       if (result.success === 1) {
         return {
           success: true,
-          messageId: result.results?.[0]?.message_id
+          messageId: result.results?.[0]?.message_id,
         }
       } else {
         return {
           success: false,
           error: result.results?.[0]?.error || 'Error FCM desconocido',
-          failureReason: result.failure
+          failureReason: result.failure,
         }
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error de red FCM'
+        error: error instanceof Error ? error.message : 'Error de red FCM',
       }
     }
   }
@@ -406,19 +410,19 @@ export class PushService {
   private async sendAPNSPush(token: string, payload: PushPayload): Promise<PushResult> {
     // Nota: En producción necesitarías implementar la autenticación JWT para APNS
     // Por ahora, simulamos el envío
-    
+
     const apnsPayload = {
       aps: {
-        alert: {
+        'alert': {
           title: payload.title,
-          body: payload.body
+          body: payload.body,
         },
-        badge: payload.badge,
-        sound: payload.sound || 'default',
-        category: payload.category,
-        'thread-id': 'mining-notifications'
+        'badge': payload.badge,
+        'sound': payload.sound || 'default',
+        'category': payload.category,
+        'thread-id': 'mining-notifications',
       },
-      data: payload.data || {}
+      data: payload.data || {},
     }
 
     try {
@@ -440,16 +444,16 @@ export class PushService {
       //   body: JSON.stringify(apnsPayload)
       // })
 
-      await new Promise(resolve => setTimeout(resolve, 100)) // Simular latencia
+      await new Promise((resolve) => setTimeout(resolve, 100)) // Simular latencia
 
       return {
         success: true,
-        messageId: `apns-${Date.now()}`
+        messageId: `apns-${Date.now()}`,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error de red APNS'
+        error: error instanceof Error ? error.message : 'Error de red APNS',
       }
     }
   }
@@ -488,7 +492,6 @@ export class PushService {
       //   deviceInfo,
       //   registeredAt: DateTime.local()
       // })
-
     } catch (error) {
       console.error('Error registrando token:', error)
       throw error
@@ -506,15 +509,15 @@ export class PushService {
         platform: 'ios',
         userId,
         isActive: true,
-        registeredAt: DateTime.local()
+        registeredAt: DateTime.local(),
       },
       {
         token: `android_token_${userId}_${Date.now()}`,
         platform: 'android',
         userId,
         isActive: true,
-        registeredAt: DateTime.local()
-      }
+        registeredAt: DateTime.local(),
+      },
     ]
 
     return mockTokens
@@ -531,15 +534,15 @@ export class PushService {
         platform: 'ios',
         userId: 'user-1',
         isActive: true,
-        registeredAt: DateTime.local()
+        registeredAt: DateTime.local(),
       },
       {
         token: 'token_user_2_android',
         platform: 'android',
         userId: 'user-2',
         isActive: true,
-        registeredAt: DateTime.local()
-      }
+        registeredAt: DateTime.local(),
+      },
     ]
   }
 
@@ -558,10 +561,9 @@ export class PushService {
     deviceTokens: DeviceToken[],
     results: PushResult[]
   ): Promise<void> {
-    for (let i = 0; i < deviceTokens.length; i++) {
+    for (const [i, token] of deviceTokens.entries()) {
       const result = results[i]
       if (!result.success && this.shouldRemoveToken(result.error)) {
-        const token = deviceTokens[i]
         console.log(`Removiendo token inválido: ${token.token.substring(0, 20)}...`)
         // En producción: DELETE FROM device_tokens WHERE token = ?
       }
@@ -573,17 +575,17 @@ export class PushService {
    */
   private shouldRemoveToken(error?: string): boolean {
     if (!error) return false
-    
+
     const removeErrors = [
       'invalid_registration',
       'not_registered',
       'invalid_token',
       'unregistered',
       'BadDeviceToken',
-      'DeviceTokenNotForTopic'
+      'DeviceTokenNotForTopic',
     ]
-    
-    return removeErrors.some(e => error.includes(e))
+
+    return removeErrors.some((e) => error.includes(e))
   }
 
   /**
@@ -591,26 +593,26 @@ export class PushService {
    */
   private async makeHttpRequest(url: string, options: any): Promise<any> {
     let lastError: Error | null = null
-    
+
     for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
       try {
         const response = await fetch(url, options)
-        
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
-        
+
         return response
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Error desconocido')
-        
+
         if (attempt < this.retryAttempts) {
           console.log(`Intento ${attempt} falló, reintentando en ${this.retryDelay}ms...`)
-          await new Promise(resolve => setTimeout(resolve, this.retryDelay))
+          await new Promise((resolve) => setTimeout(resolve, this.retryDelay))
         }
       }
     }
-    
+
     throw lastError
   }
 
@@ -628,7 +630,7 @@ export class PushService {
       totalSent: 150,
       totalFailed: 8,
       activeDevices: userId ? 2 : 45,
-      lastSentAt: DateTime.local().minus({ minutes: 5 })
+      lastSentAt: DateTime.local().minus({ minutes: 5 }),
     }
   }
 
@@ -669,7 +671,7 @@ export class PushService {
     return {
       fcm: fcmStatus,
       apns: apnsStatus,
-      errors
+      errors,
     }
   }
 
@@ -684,7 +686,7 @@ export class PushService {
     data?: Record<string, any>
   ): Promise<string> {
     const scheduleId = `schedule_${Date.now()}_${userId}`
-    
+
     console.log('=== NOTIFICACIÓN PROGRAMADA ===')
     console.log(`ID: ${scheduleId}`)
     console.log(`Usuario: ${userId}`)

@@ -61,7 +61,11 @@ export class SensorTestUtils {
   /**
    * Genera lecturas de prueba para testing
    */
-  static generateTestReadings(sensorId: string, cascoId: string, mineroId: string): CreateSensorReadingDto[] {
+  static generateTestReadings(
+    sensorId: string,
+    cascoId: string,
+    mineroId: string
+  ): CreateSensorReadingDto[] {
     return [
       {
         sensorId,
@@ -89,7 +93,11 @@ export class SensorTestUtils {
   /**
    * Simula datos de GPS
    */
-  static generateGPSReading(sensorId: string, cascoId: string, mineroId: string): CreateSensorReadingDto {
+  static generateGPSReading(
+    sensorId: string,
+    cascoId: string,
+    mineroId: string
+  ): CreateSensorReadingDto {
     return {
       sensorId,
       cascoId,
@@ -111,7 +119,11 @@ export class SensorTestUtils {
   /**
    * Simula datos de gas peligroso
    */
-  static generateDangerousGasReading(sensorId: string, cascoId: string, mineroId: string): CreateSensorReadingDto {
+  static generateDangerousGasReading(
+    sensorId: string,
+    cascoId: string,
+    mineroId: string
+  ): CreateSensorReadingDto {
     return {
       sensorId,
       cascoId,
@@ -158,7 +170,9 @@ export class SensorTestUtils {
     for (const reading of testReadings) {
       try {
         const result = await this.sensorService.ingestReading(reading)
-        console.log(`✅ Lectura ingresada: ${result.value} ${result.unit} (Alerta: ${result.isAlert})`)
+        console.log(
+          `✅ Lectura ingresada: ${result.value} ${result.unit} (Alerta: ${result.isAlert})`
+        )
       } catch (error) {
         console.error(`❌ Error ingresando lectura:`, error)
       }

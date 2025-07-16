@@ -79,19 +79,22 @@ export const sensorIdValidator = vine.compile(
  */
 export const batchSensorDataValidator = vine.compile(
   vine.object({
-    readings: vine.array(
-      vine.object({
-        sensorId: vine.string().uuid(),
-        cascoId: vine.string().uuid(),
-        mineroId: vine.string().uuid(),
-        value: vine.number(),
-        unit: vine.string().minLength(1).maxLength(20),
-        batteryLevel: vine.number().withoutDecimals().min(0).max(100).optional(),
-        signalStrength: vine.number().withoutDecimals().min(0).max(100).optional(),
-        location: vine.string().optional(),
-        metadata: vine.any().optional(),
-        timestamp: vine.string().optional(),
-      })
-    ).minLength(1).maxLength(100)
+    readings: vine
+      .array(
+        vine.object({
+          sensorId: vine.string().uuid(),
+          cascoId: vine.string().uuid(),
+          mineroId: vine.string().uuid(),
+          value: vine.number(),
+          unit: vine.string().minLength(1).maxLength(20),
+          batteryLevel: vine.number().withoutDecimals().min(0).max(100).optional(),
+          signalStrength: vine.number().withoutDecimals().min(0).max(100).optional(),
+          location: vine.string().optional(),
+          metadata: vine.any().optional(),
+          timestamp: vine.string().optional(),
+        })
+      )
+      .minLength(1)
+      .maxLength(100),
   })
 )
