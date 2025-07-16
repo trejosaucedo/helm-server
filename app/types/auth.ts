@@ -15,9 +15,6 @@ export interface SessionData {
   refreshToken: string
   createdAt: string
   lastUsed: string
-  deviceInfo?: string
-  ipAddress?: string
-  userAgent?: string
 }
 
 export interface SessionInfo {

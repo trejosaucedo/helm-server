@@ -12,6 +12,7 @@ export const registerSupervisorValidator = vine.compile(
     fullName: vine.string().trim(),
     email: vine.string().email().normalizeEmail(),
     password: vine.string().minLength(8),
+    codigo: vine.string().trim(),
   })
 )
 

@@ -1,5 +1,10 @@
 import User from '#models/user'
-import { RegisterMineroDto, RegisterSupervisorDto, UpdateSupervisorDto, UpdateMineroDto} from '#dtos/user.dto'
+import {
+  RegisterMineroDto,
+  RegisterSupervisorDto,
+  UpdateSupervisorDto,
+  UpdateMineroDto,
+} from '#dtos/user.dto'
 
 export class UserRepository {
   async findByEmail(email: string): Promise<User | null> {
@@ -39,6 +44,12 @@ export class UserRepository {
 
     await user.save()
     return user
+  }
+
+  async updatePassword(userId: string, newPassword: string) {
+    const user = await User.findOrFail(userId)
+    user.password = newPassword
+    await user.save()
   }
 
   async createMinero(data: RegisterMineroDto & { password: string }): Promise<User> {

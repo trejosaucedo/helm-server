@@ -70,14 +70,4 @@ export class SessionRepository {
       }
     }
   }
-
-  static async cleanupExpiredSessions(userId: string) {
-    const sessionIds = await this.getUserSessions(userId)
-    for (const sessionId of sessionIds) {
-      const exists = await this.sessionExists(sessionId)
-      if (!exists) {
-        await this.removeUserSession(userId, sessionId)
-      }
-    }
-  }
 }

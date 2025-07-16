@@ -9,12 +9,7 @@ export class SessionService {
   static SESSION_TTL = 7 * 24 * 60 * 60 // 7 días en segundos
   static MAX_SESSIONS = 5
 
-  static async createSession(
-    user: User,
-    deviceInfo?: string,
-    ipAddress?: string,
-    userAgent?: string
-  ) {
+  static async createSession(user: User) {
     const sessionId = crypto.randomBytes(32).toString('hex')
     const refreshToken = crypto.randomBytes(64).toString('hex')
     const now = new Date().toISOString()
@@ -27,9 +22,6 @@ export class SessionService {
       refreshToken,
       createdAt: now,
       lastUsed: now,
-      deviceInfo,
-      ipAddress,
-      userAgent,
     }
 
     await SessionRepository.saveSession(sessionId, sessionData, this.SESSION_TTL)
@@ -96,10 +88,6 @@ export class SessionService {
     return activeSessions.sort(
       (a, b) => new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime()
     )
-  }
-
-  static async cleanupExpiredSessions(userId: string) {
-    await SessionRepository.cleanupExpiredSessions(userId)
   }
 
   static async updateSessionLastUsed(sessionId: string) {

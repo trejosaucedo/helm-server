@@ -36,10 +36,7 @@ export default class AuthController {
   async register({ request, response }: HttpContext) {
     try {
       const payload = await request.validateUsing(registerSupervisorValidator)
-      const ipAddress = request.ip()
-      const userAgent = request.header('User-Agent')
-      const deviceInfo = this.extractDeviceInfo(request)
-      const result = await this.authService.register(payload, deviceInfo, ipAddress, userAgent)
+      const result = await this.authService.register(payload)
       TokenUtils.setAuthCookies(response, result.sessionId, result.accessToken)
       return TokenUtils.successResponse(
         response,
@@ -112,16 +109,5 @@ export default class AuthController {
     return TokenUtils.successResponse(response, 'Todas las sesiones cerradas exitosamente')
   })
 
-  private extractDeviceInfo(request: HttpContext['request']): string {
-    const deviceData = {
-      userAgent: request.header('User-Agent'),
-      acceptLanguage: request.header('Accept-Language'),
-      acceptEncoding: request.header('Accept-Encoding'),
-      connection: request.header('Connection'),
-      secFetchSite: request.header('Sec-Fetch-Site'),
-      secFetchMode: request.header('Sec-Fetch-Mode'),
-      timestamp: new Date().toISOString(),
-    }
-    return JSON.stringify(deviceData)
-  }
+
 }

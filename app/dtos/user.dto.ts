@@ -2,6 +2,7 @@ export interface RegisterSupervisorDto {
   fullName: string
   email: string
   password: string
+  codigo: string
 }
 
 export interface RegisterMineroDto {

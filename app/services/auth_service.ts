@@ -11,35 +11,43 @@ import type {
 } from '#dtos/user.dto'
 import User from '#models/user'
 import { toUserResponseDto } from '#mappers/user.mapper'
+import { AccessCodeRepository } from '#repositories/acces_code_repository'
 
 export class AuthService {
   private userRepository: UserRepository
   private cascoRepository: CascoRepository
+  private codeRepo: AccessCodeRepository
 
   constructor() {
     this.userRepository = new UserRepository()
     this.cascoRepository = new CascoRepository()
+    this.codeRepo = new AccessCodeRepository()
   }
 
-  async register(
-    data: RegisterSupervisorDto,
-    deviceInfo?: string,
-    ipAddress?: string,
-    userAgent?: string
-  ): Promise<{
+  async register(data: RegisterSupervisorDto): Promise<{
     user: UserResponseDto
     accessToken: string
     sessionId: string
   }> {
+    // 1. Validar que el email no exista
     const emailExists = await this.userRepository.emailExists(data.email)
     if (emailExists) {
       throw new Error('El email ya está registrado')
     }
 
+    // 2. Validar código de acceso (AccessCode)
+    const code = await this.codeRepo.findValidCode(data.codigo, data.email)
+    if (!code) {
+      throw new Error('Código de acceso inválido o ya usado')
+    }
+
+    // 3. Crear usuario
     const user = await this.userRepository.createSupervisor(data)
+    // 4. Marcar el código como usado
+    await this.codeRepo.markCodeAsUsed(code.id)
 
-    const tokens = await SessionService.createSession(user, deviceInfo, ipAddress, userAgent)
-
+    // 5. Crear sesión y devolver info
+    const tokens = await SessionService.createSession(user)
     return {
       user: toUserResponseDto(user),
       accessToken: tokens.accessToken,
@@ -47,12 +55,7 @@ export class AuthService {
     }
   }
 
-  async login(
-    data: LoginDto,
-    deviceInfo?: string,
-    ipAddress?: string,
-    userAgent?: string
-  ): Promise<{
+  async login(data: LoginDto): Promise<{
     user: UserResponseDto
     accessToken: string
     sessionId: string
@@ -67,7 +70,7 @@ export class AuthService {
       throw new Error('Credenciales inválidas')
     }
 
-    const tokens = await SessionService.createSession(user, deviceInfo, ipAddress, userAgent)
+    const tokens = await SessionService.createSession(user)
 
     return {
       user: toUserResponseDto(user),
