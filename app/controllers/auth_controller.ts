@@ -4,6 +4,7 @@ import {
   loginValidator,
   registerMineroValidator,
   changePasswordValidator,
+  emailValidator,
 } from '#validators/auth'
 import { AuthService } from '#services/auth_service'
 import { ErrorHandler } from '#utils/error_handler'
@@ -110,9 +111,14 @@ export default class AuthController {
     return TokenUtils.successResponse(response, 'Todas las sesiones cerradas exitosamente')
   })
 
-  createAccessCodeForSupervisor = withUser(async (user, { response }: HttpContext) => {
+  createAccessCodeForSupervisor = async ({ request, response }: HttpContext) => {
     try {
-      const result = await this.authService.createAccessCodeForSupervisor(user)
+      // 1. Valida el body
+      const { email } = await request.validateUsing(emailValidator)
+
+      // 3. Llama al servicio pasando el usuario completo
+      const result = await this.authService.createAccessCodeForSupervisor(email)
+
       return response.created({
         success: true,
         message: 'Código de acceso generado correctamente',
@@ -121,5 +127,5 @@ export default class AuthController {
     } catch (error) {
       return ResponseHelper.error(error, 'Error al generar código de acceso')
     }
-  })
+  }
 }

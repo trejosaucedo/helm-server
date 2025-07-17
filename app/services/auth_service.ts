@@ -181,12 +181,12 @@ export class AuthService {
     }
   }
 
-  async createAccessCodeForSupervisor(user: User): Promise<{ code: string }> {
+  async createAccessCodeForSupervisor(email: string): Promise<{ code: string }> {
     // 2. Generar código aleatorio
-    const code = randomBytes(6).toString('hex').toUpperCase() // Ej: 12 caracteres hexadecimales
+    const code = randomBytes(6).toString('hex').toUpperCase()
 
     // 3. Guardar el código en la base de datos
-    await this.codeRepo.create(code, user.email)
+    await this.codeRepo.create(code, email)
 
     // 4. Retornar el código en objeto
     return { code }
