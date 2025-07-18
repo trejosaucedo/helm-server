@@ -7,11 +7,11 @@ export class SensorRepository {
   }
 
   async findByCascoId(cascoId: string): Promise<Sensor[]> {
-    return await Sensor.query().where('casco_id', cascoId).orderBy('type')
+    return Sensor.query().where('casco_id', cascoId).orderBy('type')
   }
 
   async findByType(type: 'gps' | 'heart_rate' | 'body_temperature' | 'gas'): Promise<Sensor[]> {
-    return await Sensor.query().where('type', type).where('is_active', true)
+    return Sensor.query().where('type', type).where('is_active', true)
   }
 
   async create(data: CreateSensorDto): Promise<Sensor> {
@@ -19,11 +19,11 @@ export class SensorRepository {
       cascoId: data.cascoId,
       type: data.type,
       name: data.name,
-      minValue: data.minValue || null,
-      maxValue: data.maxValue || null,
+      minValue: data.minValue ?? null,
+      maxValue: data.maxValue ?? null,
       unit: data.unit,
-      sampleRate: data.sampleRate || 60,
-      alertThreshold: data.alertThreshold || null,
+      sampleRate: data.sampleRate ?? 60,
+      alertThreshold: data.alertThreshold ?? null,
       isActive: true,
     })
   }
@@ -73,11 +73,11 @@ export class SensorRepository {
   }
 
   async getActiveSensorsByCasco(cascoId: string): Promise<Sensor[]> {
-    return await Sensor.query().where('casco_id', cascoId).where('is_active', true).orderBy('type')
+    return Sensor.query().where('casco_id', cascoId).where('is_active', true).orderBy('type')
   }
 
   async getSensorsByMinero(mineroId: string): Promise<Sensor[]> {
-    return await Sensor.query()
+    return Sensor.query()
       .whereHas('casco', (query) => {
         query.where('minero_id', mineroId)
       })
@@ -86,7 +86,7 @@ export class SensorRepository {
   }
 
   async getSensorsBySupervisor(supervisorId: string): Promise<Sensor[]> {
-    return await Sensor.query()
+    return Sensor.query()
       .whereHas('casco', (query) => {
         query.where('supervisor_id', supervisorId)
       })
@@ -98,7 +98,7 @@ export class SensorRepository {
    * Buscar sensores por minero (a través del casco asignado)
    */
   async findByMineroId(mineroId: string): Promise<Sensor[]> {
-    return await Sensor.query()
+    return Sensor.query()
       .whereHas('casco', (query) => {
         query.where('minero_id', mineroId)
       })

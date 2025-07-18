@@ -1,8 +1,7 @@
 import app from '@adonisjs/core/services/app'
 import server from '@adonisjs/core/services/server'
 import { Server } from 'socket.io'
-import { wsAuthMiddleware } from '../app/middleware/ws_auth_middleware.js'
-import { WebSocketService } from '../app/services/websocket_service.js'
+import { WebSocketService } from '#services/websocket_service'
 
 let io: Server | null = null
 let wsService: WebSocketService | null = null
@@ -12,15 +11,12 @@ app.ready(() => {
     cors: {
       origin: '*',
       methods: ['GET', 'POST'],
-      credentials: true
+      credentials: true,
     },
   })
 
   // Crear instancia del servicio WebSocket
   wsService = new WebSocketService(io)
-
-  // Usar middleware de autenticación
-  io.use(wsAuthMiddleware)
 
   // Manejar conexiones
   io.on('connection', (socket) => {

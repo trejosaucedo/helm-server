@@ -4,13 +4,16 @@
  */
 
 import { SensorService } from '#services/sensor_service'
+import { SensorReadingService } from '#services/sensor_reading_service'
 import type { CreateSensorDto, CreateSensorReadingDto } from '#dtos/sensor.dto'
 
 export class SensorTestUtils {
   private sensorService: SensorService
+  private sensorReadingService: SensorReadingService
 
   constructor() {
     this.sensorService = new SensorService()
+    this.sensorReadingService = new SensorReadingService()
   }
 
   /**
@@ -169,7 +172,8 @@ export class SensorTestUtils {
 
     for (const reading of testReadings) {
       try {
-        const result = await this.sensorService.ingestReading(reading)
+        // ⚡ Usa el service correcto:
+        const result = await this.sensorReadingService.ingestReading(reading)
         console.log(
           `✅ Lectura ingresada: ${result.value} ${result.unit} (Alerta: ${result.isAlert})`
         )

@@ -5,6 +5,7 @@
 
 import { MongoClient, Collection, Db } from 'mongodb'
 import env from '#start/env'
+export type SensorReadingPayload = Omit<SensorReadingDocument, '_id' | 'receivedAt' | 'createdAt'>
 
 export interface SensorReadingDocument {
   _id?: string

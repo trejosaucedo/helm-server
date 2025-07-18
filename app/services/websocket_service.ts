@@ -15,7 +15,7 @@ export class WebSocketService {
     // Emitir al canal específico del minero y su equipo
     // El equipo ya está suscrito al canal minero:${reading.mineroId}
     this.io.to(`minero:${reading.mineroId}`).emit('sensor-reading', reading)
-    
+
     // Si es una lectura crítica, emitir alerta
     if (this.isReadingCritical(reading)) {
       this.emitAlert(reading)
@@ -32,7 +32,7 @@ export class WebSocketService {
       sensorType: reading.type,
       value: reading.value,
       timestamp: reading.timestamp,
-      message: this.getAlertMessage(reading)
+      message: this.getAlertMessage(reading),
     }
 
     // Emitir a minero y supervisor

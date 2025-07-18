@@ -2,7 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { TokenUtils } from '#utils/token_utils'
 import { SessionService } from '#services/session_service'
-import { toUserResponseDto } from '../mappers/user.mapper.js'
+import { toUserResponseDto } from '#mappers/user.mapper'
 
 export default class AuthMiddleware {
   public async handle(ctx: HttpContext, next: NextFn, guards?: string | string[]) {

@@ -1,33 +1,24 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 
-// ------------------------
-// Auth públicas
-// ------------------------
 router.post('/register', '#controllers/auth_controller.register')
 router.post('/login', '#controllers/auth_controller.login')
 router
   .post('/access-codes', '#controllers/auth_controller.createAccessCodeForSupervisor')
   .use(middleware.auth('admin'))
-// ------------------------
-// Auth protegidas
-// ------------------------
+
 router
   .group(() => {
     router.post('/logout', '#controllers/auth_controller.logout')
     router.post('/logout-all', '#controllers/auth_controller.logoutAll')
     router.get('/me', '#controllers/auth_controller.me')
     router.put('/change-password', '#controllers/auth_controller.changePassword')
-    // Registro de mineros (solo supervisores)
     router.post('/register-minero', '#controllers/auth_controller.registerMinero')
     router.get('/sessions', '#controllers/auth_controller.getSessions')
     router.delete('/sessions/:sessionId', '#controllers/auth_controller.revokeSession')
   })
   .use(middleware.auth())
 
-// ------------------------
-// Cascos (solo supervisores)
-// ------------------------
 router
   .group(() => {
     router.post('/activate', '#controllers/casco_controller.activate')
@@ -40,104 +31,85 @@ router
   .prefix('/cascos')
   .use(middleware.auth('supervisor'))
 
-// Crear casco (supervisores y admin)
 router.post('/cascos', '#controllers/casco_controller.create').use(middleware.auth('supervisor'))
-
-// RUTA TEMPORAL - ELIMINAR DESPUÉS DE DEBUGGING
 router.delete('/cascos/clean', '#controllers/casco_controller.cleanCascos')
 
-// ------------------------
-// Notificaciones (usuario autenticado)
-// ------------------------
 router
   .group(() => {
-    // Listar notificaciones (paginado)
     router.get('/', '#controllers/notification_controller.index')
-    // Conteo no leídas
     router.get('/count', '#controllers/notification_controller.unreadCount')
-    // Marcar como leída
     router.post('/:id/read', '#controllers/notification_controller.markRead')
-    // Marcar todas como leídas
     router.post('/read-all', '#controllers/notification_controller.markAllRead')
-    // Eliminar una específica
     router.delete('/:id', '#controllers/notification_controller.destroy')
-    // Limpiar todas leídas
     router.delete('/clear', '#controllers/notification_controller.clearRead')
   })
   .prefix('/notifications')
   .use(middleware.auth())
 
-// ------------------------
-// Notificaciones: creación y stats
-// ------------------------
-
-// Crear múltiples notificaciones (bulk) (admin o supervisor)
 router
   .post('/notifications/bulk', '#controllers/notification_controller.bulkStore')
   .use(middleware.auth('admin'))
-
-// Obtener estadísticas de notificaciones (admin o supervisor)
 router
   .get('/notifications/stats', '#controllers/notification_controller.stats')
   .use(middleware.auth('admin'))
-
-// Enviar mensaje de supervisor a mineros/equipos
 router
   .post('/notifications/supervisor', '#controllers/notification_controller.sendSupervisorMessage')
   .use(middleware.auth('supervisor'))
-
-// Registro de tokens de push (todos los usuarios autenticados)
 router
   .post('/device-tokens', '#controllers/notification_controller.registerDeviceToken')
   .use(middleware.auth())
 
-// ------------------------
-// Sensores: ingestión de datos
-// ------------------------
+// --- Sensores ---
 router
   .group(() => {
-    // Crear sensor (solo supervisor)
     router.post('/', '#controllers/sensor_controller.store').use(middleware.auth('supervisor'))
-
-    // Actualizar sensor (solo supervisor)
     router.put('/:id', '#controllers/sensor_controller.update').use(middleware.auth('supervisor'))
-
-    // Obtener sensores por casco
     router
       .get('/casco/:cascoId', '#controllers/sensor_controller.getByCasco')
       .use(middleware.auth())
-
-    // Obtener sensores por minero
     router
       .get('/minero/:mineroId', '#controllers/sensor_controller.getByMinero')
-      .use(middleware.auth())
-
-    // Obtener estadísticas de sensor
-    router.get('/:id/stats', '#controllers/sensor_controller.getSensorStats').use(middleware.auth())
-
-    // Ingestión de lecturas (sin autenticación para dispositivos)
-    router.post('/readings', '#controllers/sensor_controller.ingestReading')
-    router.post('/readings/batch', '#controllers/sensor_controller.ingestBatchReadings')
-
-    // Consultar lecturas (con autenticación)
-    router.get('/readings', '#controllers/sensor_controller.getReadings').use(middleware.auth())
-    router
-      .get('/readings/recent/:mineroId', '#controllers/sensor_controller.getRecentReadings')
       .use(middleware.auth())
   })
   .prefix('/sensors')
 
-// ------------------------
-// Dispositivos IoT (sin autenticación - usan token de dispositivo)
-// ------------------------
+// --- Lecturas de sensores ---
+router
+  .group(() => {
+    router.post('/readings', '#controllers/sensor_reading_controller.ingestReading')
+    router.post('/readings/batch', '#controllers/sensor_reading_controller.ingestBatchReadings')
+    router
+      .get('/readings', '#controllers/sensor_reading_controller.getReadings')
+      .use(middleware.auth())
+    router
+      .get('/readings/recent/:mineroId', '#controllers/sensor_reading_controller.getRecentReadings')
+      .use(middleware.auth())
+    router
+      .get('/:sensorId/stats', '#controllers/sensor_reading_controller.getSensorStats')
+      .use(middleware.auth())
+  })
+  .prefix('/sensors')
+
+// Dispositivos IoT
 router.post(
   '/cascos/:cascoId/sensores/:sensorId',
   '#controllers/sensor_controller.publishSensorData'
 )
 
-// ------------------------
-// Health Check
-// ------------------------
+router
+  .group(() => {
+    router.get('/:teamId/miners', '#controllers/team_controller.getTeamMiners')
+    router.post('/', '#controllers/team_controller.create').use(middleware.auth('supervisor'))
+    router
+      .post('/:teamId/assign-miner', '#controllers/team_controller.assignMinerToTeam')
+      .use(middleware.auth('supervisor'))
+    router
+      .get('/supervisor', '#controllers/team_controller.getTeamsBySupervisor')
+      .use(middleware.auth('supervisor'))
+  })
+  .prefix('/teams')
+  .use(middleware.auth())
+
 router.get('/health', ({ response }) => {
   return response.json({
     status: 'ok',
@@ -146,7 +118,3 @@ router.get('/health', ({ response }) => {
     version: '1.0.0',
   })
 })
-
-// ------------------------
-// Fin de routes.ts
-// ------------------------

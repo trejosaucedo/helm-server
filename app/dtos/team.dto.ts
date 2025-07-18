@@ -18,3 +18,16 @@ export interface TeamResponseDto {
   createdAt: string
   updatedAt: string | null
 }
+
+export interface TeamMinerResponseDto {
+  id: string
+  nombre: string
+  fechaAsignacion: string
+  fechaSalida: string | null
+  zona: string
+}
+
+export interface AssignMinerDto {
+  teamId: string
+  mineroId: string
+}

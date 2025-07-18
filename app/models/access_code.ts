@@ -1,28 +1,34 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { BaseModel, column, beforeCreate } from '@adonisjs/lucid/orm'
+import { randomUUID } from 'node:crypto'
 
 export default class AccessCode extends BaseModel {
-  @column({ isPrimary: true, autoIncrement: true })
-  declare id: number
+  @column({ isPrimary: true })
+  declare id: string
 
   @column()
   declare codigo: string
 
   @column()
-  declare correoSupervisor: string
+  declare correo_supervisor: string
 
   @column()
   declare usado: boolean
 
-  @column.dateTime({ useTz: false })
-  declare fechaGeneracion: DateTime
+  @column.dateTime()
+  declare fecha_generacion: DateTime
 
-  @column.dateTime({ useTz: false })
-  declare fechaUso: DateTime | null
+  @column.dateTime()
+  declare fecha_uso: DateTime | null
 
-  @column.dateTime({ autoCreate: true, useTz: false })
-  declare createdAt: DateTime
+  @column.dateTime({ autoCreate: true })
+  declare created_at: DateTime
 
-  @column.dateTime({ autoCreate: true, autoUpdate: true, useTz: false })
-  declare updatedAt: DateTime | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updated_at: DateTime | null
+
+  @beforeCreate()
+  static async assignUuid(accessCode: AccessCode) {
+    accessCode.id = randomUUID()
+  }
 }

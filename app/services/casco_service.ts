@@ -122,6 +122,11 @@ export class CascoService {
     await this.cascoRepository.deactivateCasco(data.cascoId)
   }
 
+  async exists(cascoId: string): Promise<boolean> {
+    const casco = await this.cascoRepository.findById(cascoId)
+    return !!casco
+  }
+
   private mapCascoToResponse(casco: any): CascoResponseDto {
     return {
       id: casco.id,

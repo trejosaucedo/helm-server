@@ -42,9 +42,9 @@ export interface CreateSensorReadingDto {
   unit: string
   batteryLevel?: number
   signalStrength?: number
-  location?: string // JSON string para GPS
+  location?: string
   metadata?: Record<string, any>
-  timestamp?: string | Date // ISO string o Date object
+  timestamp?: string | Date
 }
 
 export interface SensorReadingResponseDto {

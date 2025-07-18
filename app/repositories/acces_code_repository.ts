@@ -10,23 +10,22 @@ export class AccessCodeRepository {
       .first()
   }
 
-  async markCodeAsUsed(id: number) {
-    // Usar consulta SQL directa para evitar problemas con zonas horarias
+  async markCodeAsUsed(id: string) {
     await AccessCode.query()
       .where('id', id)
       .update({
-      usado: true,
+        usado: true,
         fecha_uso: DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss'),
-    })
+      })
   }
 
   async create(codigo: string, correoSupervisor: string) {
     console.log('AccessCodeRepository: Creando código:', codigo, 'para email:', correoSupervisor)
     const result = await AccessCode.create({
       codigo,
-      correoSupervisor,
+      correo_supervisor: correoSupervisor,
       usado: false,
-      fechaGeneracion: DateTime.now(),
+      fecha_generacion: DateTime.now(),
     })
     console.log('AccessCodeRepository: Código creado en BD:', result.id)
     return result
