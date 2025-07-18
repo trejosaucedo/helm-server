@@ -12,6 +12,7 @@ import type {
 } from '#services/sensor_reading_mongo_service'
 // @ts-ignore
 import { wsService } from '#start/ws'
+import { SensorRecentReadingsRepository } from '#repositories/sensor_recent_readings_repository'
 
 type PublishSensorDataInput = {
   cascoId: string
@@ -74,6 +75,15 @@ export class SensorReadingService {
 
       const reading = await this.readingRepository.create(payload)
 
+      await SensorRecentReadingsRepository.addRecentReading(
+        data.sensorId,
+        {
+          ...payload,
+          timestamp: payload.timestamp,
+        },
+        5
+      )
+
       if (isAlert) await this.generateAlertNotification(reading, sensor)
       // aquí emitir websockets si quieres
 
@@ -108,6 +118,10 @@ export class SensorReadingService {
     } finally {
       await this.disconnect()
     }
+  }
+
+  async getRecentReadingsRedis(sensorId: string): Promise<any[]> {
+    return SensorRecentReadingsRepository.getRecentReadings(sensorId)
   }
 
   async getReadings(filters: SensorReadingFiltersDto): Promise<SensorReadingDocument[]> {

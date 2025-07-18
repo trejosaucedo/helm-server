@@ -1,6 +1,7 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 
+// --- Autenticación ---
 router.post('/register', '#controllers/auth_controller.register')
 router.post('/login', '#controllers/auth_controller.login')
 router
@@ -19,6 +20,7 @@ router
   })
   .use(middleware.auth())
 
+// --- Cascos (helmets) ---
 router
   .group(() => {
     router.post('/activate', '#controllers/casco_controller.activate')
@@ -34,6 +36,7 @@ router
 router.post('/cascos', '#controllers/casco_controller.create').use(middleware.auth('supervisor'))
 router.delete('/cascos/clean', '#controllers/casco_controller.cleanCascos')
 
+// --- Notificaciones ---
 router
   .group(() => {
     router.get('/', '#controllers/notification_controller.index')
@@ -59,7 +62,7 @@ router
   .post('/device-tokens', '#controllers/notification_controller.registerDeviceToken')
   .use(middleware.auth())
 
-// --- Sensores ---
+// --- Sensores: administración (SensorController) ---
 router
   .group(() => {
     router.post('/', '#controllers/sensor_controller.store').use(middleware.auth('supervisor'))
@@ -73,7 +76,7 @@ router
   })
   .prefix('/sensors')
 
-// --- Lecturas de sensores ---
+// --- Sensores: lecturas (SensorReadingController) ---
 router
   .group(() => {
     router.post('/readings', '#controllers/sensor_reading_controller.ingestReading')
@@ -87,15 +90,22 @@ router
     router
       .get('/:sensorId/stats', '#controllers/sensor_reading_controller.getSensorStats')
       .use(middleware.auth())
+    router
+      .get(
+        '/sensors/:sensorId/recent-cache',
+        '#controllers/sensor_reading_controller.recentReadingsFromRedis'
+      )
+      .use(middleware.auth())
   })
   .prefix('/sensors')
 
-// Dispositivos IoT
+// --- Dispositivos IoT: lectura directa desde Raspberry ---
 router.post(
   '/cascos/:cascoId/sensores/:sensorId',
   '#controllers/sensor_controller.publishSensorData'
 )
 
+// --- Equipos (teams) ---
 router
   .group(() => {
     router.get('/:teamId/miners', '#controllers/team_controller.getTeamMiners')
@@ -110,6 +120,7 @@ router
   .prefix('/teams')
   .use(middleware.auth())
 
+// --- Health check ---
 router.get('/health', ({ response }) => {
   return response.json({
     status: 'ok',

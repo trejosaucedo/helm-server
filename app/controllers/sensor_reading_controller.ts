@@ -10,9 +10,11 @@ import { ErrorHandler } from '#utils/error_handler'
 
 export default class SensorReadingController {
   private readingService: SensorReadingService
+  private sensorReadingService: SensorReadingService
 
   constructor() {
     this.readingService = new SensorReadingService()
+    this.sensorReadingService = new SensorReadingService()
   }
 
   // POST /sensors/readings
@@ -92,6 +94,22 @@ export default class SensorReadingController {
     } catch (error) {
       ErrorHandler.logError(error, 'SENSOR_GET_STATS')
       return ErrorHandler.handleError(error, response, 'Error al obtener estadísticas', 400)
+    }
+  }
+
+  async recentReadingsFromRedis({ params, response }: HttpContext) {
+    try {
+      const readings = await this.sensorReadingService.getRecentReadingsRedis(params.sensorId)
+      return response.json({
+        success: true,
+        message: 'Lecturas recientes desde Redis',
+        data: readings,
+      })
+    } catch (error) {
+      return response.status(500).json({
+        success: false,
+        message: 'Error al obtener lecturas recientes desde Redis',
+      })
     }
   }
 
