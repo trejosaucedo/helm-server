@@ -13,6 +13,10 @@ export interface RegisterMineroDto {
   fechaContratacion?: string
   especialidadEnMineria?: string
   genero?: 'masculino' | 'femenino'
+  birthDate?: string
+  phone?: string
+  rfc?: string
+  address?: string
 }
 
 export interface LoginDto {

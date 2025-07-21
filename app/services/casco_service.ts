@@ -62,6 +62,10 @@ export class CascoService {
     return cascos.map((casco) => this.mapCascoToResponse(casco))
   }
 
+  async getAllCascos() {
+    return await this.cascoRepository.getAllCascos()
+  }
+
   async assignCasco(data: AssignCascoDto): Promise<void> {
     const casco = await this.cascoRepository.findById(data.cascoId)
     if (!casco) {

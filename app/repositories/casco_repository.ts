@@ -104,4 +104,8 @@ export class CascoRepository {
   async findAll(): Promise<Casco[]> {
     return await Casco.all()
   }
+
+  async getAllCascos() {
+    return await Casco.all()
+  }
 }

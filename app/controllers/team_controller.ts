@@ -64,9 +64,15 @@ export default class TeamController {
       const team = await this.teamService.assignMinerToTeam(payload)
       return jsonSuccess(ctx.response, 'Minero asignado exitosamente', team)
     } catch (error) {
+      console.error('Error en assignMiner:', error)
+      console.error('Body recibido:', ctx.request.body())
       ErrorHandler.logError(error, 'TEAM_ASSIGN_MINER')
       return jsonError(ctx.response, error.message || 'Error al asignar minero al equipo', 400)
     }
+  }
+
+  async assignMinerToTeam(ctx: HttpContext) {
+    return this.assignMiner(ctx);
   }
 
   async getTeamsBySupervisor(ctx: HttpContext) {
@@ -101,6 +107,70 @@ export default class TeamController {
     } catch (error) {
       ErrorHandler.logError(error, 'TEAM_GET_MINERS')
       return jsonError(ctx.response, error.message || 'Error al obtener compañeros de equipo', 500)
+    }
+  }
+
+  async getTeam(ctx: HttpContext) {
+    try {
+      const id = ctx.params.id;
+      const team = await this.teamService.getTeamById(id);
+      if (!team) {
+        return jsonError(ctx.response, 'Equipo no encontrado', 404);
+      }
+      return jsonSuccess(ctx.response, 'Detalle de equipo obtenido exitosamente', team);
+    } catch (error) {
+      ErrorHandler.logError(error, 'TEAM_DETAIL');
+      return jsonError(ctx.response, error.message || 'Error al obtener detalle de equipo', 400);
+    }
+  }
+
+  async updateTeam(ctx: HttpContext) {
+    try {
+      const id = ctx.params.id;
+      const payload = ctx.request.body();
+      const updated = await this.teamService.updateTeam(id, payload);
+      if (!updated) {
+        return jsonError(ctx.response, 'Equipo no encontrado', 404);
+      }
+      return jsonSuccess(ctx.response, 'Equipo actualizado exitosamente', updated);
+    } catch (error) {
+      ErrorHandler.logError(error, 'TEAM_UPDATE');
+      return jsonError(ctx.response, error.message || 'Error al actualizar equipo', 400);
+    }
+  }
+
+  async deleteTeam(ctx: HttpContext) {
+    try {
+      const id = ctx.params.id;
+      const deleted = await this.teamService.deleteTeam(id);
+      if (!deleted) {
+        return jsonError(ctx.response, 'Equipo no encontrado', 404);
+      }
+      return jsonSuccess(ctx.response, 'Equipo eliminado exitosamente');
+    } catch (error) {
+      ErrorHandler.logError(error, 'TEAM_DELETE');
+      return jsonError(ctx.response, error.message || 'Error al eliminar equipo', 400);
+    }
+  }
+
+  async list(ctx: HttpContext) {
+    try {
+      const teams = await this.teamService.getAllTeams()
+      return jsonSuccess(ctx.response, 'Equipos obtenidos exitosamente', teams)
+    } catch (error) {
+      ErrorHandler.logError(error, 'TEAM_LIST')
+      return jsonError(ctx.response, error.message || 'Error al obtener equipos', 500)
+    }
+  }
+
+  async stats(ctx: HttpContext) {
+    try {
+      const teams = await this.teamService.getAllTeams()
+      const total = teams.length
+      return jsonSuccess(ctx.response, 'Estadísticas de equipos obtenidas exitosamente', { total })
+    } catch (error) {
+      ErrorHandler.logError(error, 'TEAM_STATS')
+      return jsonError(ctx.response, error.message || 'Error al obtener estadísticas', 500)
     }
   }
 }

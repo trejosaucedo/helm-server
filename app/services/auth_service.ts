@@ -159,6 +159,10 @@ export class AuthService {
       fechaContratacion: data.fechaContratacion ?? null,
       especialidadEnMineria: data.especialidadEnMineria ?? null,
       genero: data.genero ?? null,
+      birthDate: data.birthDate ?? null,
+      phone: data.phone ?? null,
+      rfc: data.rfc ?? null,
+      address: data.address ?? null,
     }
 
     if (data.cascoId) {

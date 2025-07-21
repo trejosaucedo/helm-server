@@ -41,14 +41,26 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column()
   declare supervisorId: string | null
 
-  @column.dateTime()
-  declare fechaContratacion: DateTime | null
+  @column({ columnName: 'fecha_contratacion' })
+  declare fechaContratacion: string | null
 
-  @column()
+  @column({ columnName: 'especialidad_en_mineria' })
   declare especialidadEnMineria: string | null
 
+  @column({ columnName: 'genero' })
+  declare genero: string | null
+
   @column()
-  declare genero: 'masculino' | 'femenino' | null
+  declare birthDate: string | null
+
+  @column()
+  declare phone: string | null
+
+  @column()
+  declare rfc: string | null
+
+  @column()
+  declare address: string | null
 
   // Un supervisor tiene muchos cascos
   @hasMany(() => Casco, {

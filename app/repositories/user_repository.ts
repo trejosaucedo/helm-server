@@ -59,6 +59,14 @@ export class UserRepository {
       password: data.password,
       role: 'minero',
       cascoId: data.cascoId,
+      birthDate: data.birthDate ?? null,
+      phone: data.phone ?? null,
+      address: data.address ?? null,
+      rfc: data.rfc ?? null,
+      fechaContratacion: data.fechaContratacion ?? null,
+      especialidadEnMineria: data.especialidadEnMineria ?? null,
+      genero: data.genero ?? null,
+      supervisorId: data.supervisorId ?? null,
     })
   }
 

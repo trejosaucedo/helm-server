@@ -6,7 +6,7 @@ import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 
 export default class TeamMiner extends BaseModel {
   @column({ isPrimary: true })
-  declare id: string
+  declare id: number
 
   @column()
   declare mineroId: string

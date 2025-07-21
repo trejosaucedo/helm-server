@@ -30,4 +30,12 @@ export class AccessCodeRepository {
     console.log('AccessCodeRepository: Código creado en BD:', result.id)
     return result
   }
+
+  async getCodesByEmail(email: string) {
+    return await AccessCode.query().where('correo_supervisor', email)
+  }
+
+  async getCodeByEmail(email: string) {
+    return await AccessCode.query().where('correo_supervisor', email).orderBy('fecha_generacion', 'desc').first()
+  }
 }

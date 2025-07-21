@@ -19,3 +19,13 @@ export const createCascoValidator = vine.compile(
     supervisorId: vine.string().trim().optional(),
   })
 )
+
+export const updateCascoValidator = vine.compile(
+  vine.object({
+    serial: vine.string().trim().optional(),
+    physicalId: vine.string().trim().optional(),
+    isActive: vine.boolean().optional(),
+    supervisorId: vine.string().trim().optional().nullable(),
+    mineroId: vine.string().trim().optional().nullable(),
+  })
+)

@@ -6,7 +6,12 @@ export class TeamRepository {
   }
 
   async findById(id: string) {
-    return Team.query().where('id', id).first()
+    return await Team.query()
+      .where('id', id)
+      .preload('mineros', (query) => {
+        query.preload('minero')
+      })
+      .first();
   }
 
   async findTeamsBySupervisorId(supervisorId: string) {
@@ -15,5 +20,9 @@ export class TeamRepository {
 
   async findByTeamId(teamId: string) {
     return Team.query().where('id', teamId).first()
+  }
+
+  async getAllTeams() {
+    return await Team.query().preload('mineros')
   }
 }

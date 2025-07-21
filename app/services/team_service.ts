@@ -22,7 +22,7 @@ export class TeamService {
     const { supervisorId, nombre, zona } = data
 
     const supervisor = await this.userRepository.findById(supervisorId)
-    if (!supervisor || supervisor.role !== 'supervisor') {
+    if (!supervisor || (supervisor.role !== 'supervisor' && supervisor.role !== 'admin')) {
       throw new Error('Supervisor no encontrado o no tiene el rol adecuado')
     }
 
@@ -58,6 +58,10 @@ export class TeamService {
     return teams.map((team) => this.mapTeamToResponse(team))
   }
 
+  async getAllTeams() {
+    return await this.teamRepository.getAllTeams()
+  }
+
   async getTeamMiners(teamId: string): Promise<TeamMinerResponseDto[]> {
     // Obtener el equipo usando el teamId
     const team = await this.teamRepository.findById(teamId)
@@ -77,6 +81,10 @@ export class TeamService {
         fechaAsignacion: minero.fechaAsignacion?.toISO() || '',
         fechaSalida: minero.fechaSalida?.toISO() || null,
       }))
+  }
+
+  async getTeamById(id: string) {
+    return await this.teamRepository.findById(id);
   }
 
   private mapTeamToResponse(team: Team): TeamResponseDto {
