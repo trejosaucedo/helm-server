@@ -1,21 +1,29 @@
 export interface CreateNotificationDto {
   userId: string
-  type: string // Ej: 'alerta_sensor', 'asignacion', 'mensaje', etc.
-  mensaje: string
-  data?: string // JSON.stringify de info extra
-  canal: string // 'app', 'correo', 'push', 'web', etc.
+  type: 'sensor_alert' | 'system' | 'supervisor_message'
+  title: string
+  message: string
+  priority?: string
+  data?: any
 }
 
 export interface NotificationResponseDto {
   id: string
   userId: string
-  type: string
-  mensaje: string
-  data: string | null
-  canal: string
-  read: boolean
-  fechaEnvio: string
-  fechaLeido: string | null
+  type: 'sensor_alert' | 'system' | 'supervisor_message'
+  title: string
+  message: string
+  priority: string
+  isRead: boolean
+  data: any
   createdAt: string
   updatedAt: string | null
+}
+
+export interface NotificationFiltersDto {
+  type?: 'sensor_alert' | 'system' | 'supervisor_message'
+  isRead?: boolean
+  priority?: string
+  page?: number
+  limit?: number
 }

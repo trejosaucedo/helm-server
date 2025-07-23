@@ -79,6 +79,9 @@ export class WebSocketService {
     const { user } = socket.data
     console.log(`Cliente conectado: ${user.name} (${user.role})`)
 
+    // Unir a sala personal para notificaciones
+    socket.join(`user:${user.id}`)
+
     // Unir a salas según rol y equipo
     if (user.role === 'minero') {
       socket.join(`minero:${user.id}`)
@@ -89,5 +92,19 @@ export class WebSocketService {
     socket.on('disconnect', () => {
       console.log(`Cliente desconectado: ${user.name}`)
     })
+  }
+
+  /**
+   * Emitir notificación a un usuario específico
+   */
+  emitNotification(userId: string, notification: any) {
+    this.io.to(`user:${userId}`).emit('notification', notification)
+  }
+
+  /**
+   * Emitir a una sala específica
+   */
+  emitToRoom(room: string, event: string, data: any) {
+    this.io.to(room).emit(event, data)
   }
 }

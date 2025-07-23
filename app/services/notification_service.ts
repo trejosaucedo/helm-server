@@ -1,197 +1,230 @@
-import {
-  NotificationRepository,
-  CreateNotificationAttrs,
-} from '#repositories/notification_repository'
-import Notification from '#models/notification'
-import { EmailService } from '#services/email_service'
-import { PushService } from '#services/push_service'
-
-export interface CreateNotificationDTO extends CreateNotificationAttrs {}
+import { NotificationRepository } from '#repositories/notification_repository'
+import type { 
+  CreateNotificationDto, 
+  NotificationResponseDto, 
+  NotificationFiltersDto 
+} from '#dtos/notification.dto'
+// @ts-ignore
+import { wsService } from '#start/ws'
 
 export class NotificationService {
-  private repo = new NotificationRepository()
-  private emailService = new EmailService()
-  private pushService = new PushService()
+  private repository: NotificationRepository
 
-  /**
-   * Crea una notificación en BD y la entrega por los canales configurados.
-   */
-  public async sendNotification(attrs: CreateNotificationDTO): Promise<Notification> {
-    // 1. Crear en BD
-    const notification = await this.repo.createNotification(attrs)
-
-    // 2. Orquestar envío por email/push según flags
-    await this.processDeliveryChannels(notification)
-
-    return notification
+  constructor() {
+    this.repository = new NotificationRepository()
   }
 
   /**
-   * Crea varias notificaciones (bulk) y procesa sus canales de entrega.
+   * Crea una notificación y decide por qué canales enviarla
    */
-  public async sendBulkNotifications(
-    notifications: CreateNotificationDTO[]
-  ): Promise<Notification[]> {
-    // 1. Bulk insert en BD
-    const created = await this.repo.bulkCreateNotifications(notifications)
+  async create(data: CreateNotificationDto): Promise<NotificationResponseDto> {
+    // 1. Guardar en base de datos
+    const notification = await this.repository.create(data)
 
-    // 2. Orquestar envío para cada una
-    await Promise.all(created.map((n) => this.processDeliveryChannels(n)))
+    // 2. Decidir canales según tipo y prioridad
+    await this.sendToChannels(notification)
 
-    return created
+    return this.toResponseDto(notification)
   }
 
   /**
-   * Interno: envía email y/o push según corresponda y marca el delivery en BD.
+   * Crear múltiples notificaciones (para supervisores que envían mensajes masivos)
    */
-  private async processDeliveryChannels(notification: Notification): Promise<void> {
-    // Email
-    if (notification.shouldSendEmail()) {
-      try {
-        await this.emailService.sendNotificationEmail(notification)
-        await this.repo.updateDeliveryStatus(notification.id, 'email', true)
-      } catch (err) {
-        console.error('Error enviando email:', err)
-      }
+  async createBulk(notifications: CreateNotificationDto[]): Promise<NotificationResponseDto[]> {
+    const created = await this.repository.bulkCreate(notifications)
+    
+    // Enviar por canales correspondientes
+    for (const notification of created) {
+      await this.sendToChannels(notification)
     }
 
-    // Push
-    if (notification.shouldSendPush()) {
-      try {
-        await this.pushService.sendNotificationPush(notification)
-        await this.repo.updateDeliveryStatus(notification.id, 'push', true)
-      } catch (err) {
-        console.error('Error enviando push:', err)
-      }
-    }
+    return created.map(notif => this.toResponseDto(notif))
   }
 
   /**
-   * Permite a un supervisor enviar un mensaje a múltiples usuarios.
+   * Obtener notificaciones de un usuario con filtros
    */
-  public async sendSupervisorMessage(
-    userIds: string[],
-    title: string,
-    message: string,
-    data?: Record<string, any>,
-    priority: 'low' | 'medium' | 'high' | 'critical' = 'medium'
-  ): Promise<Notification[]> {
-    const payloads: CreateNotificationDTO[] = userIds.map((userId) => ({
-      userId,
-      type: 'supervisor',
-      title,
-      message,
-      priority,
-      deliveryChannels: ['database', 'push', 'email'],
-      data: { ...data, timestamp: new Date().toISOString() },
-    }))
-
-    return this.sendBulkNotifications(payloads)
-  }
-
-  // Métodos de lectura / estado
-
-  public async getUserNotifications(
-    userId: string,
-    options?: { page?: number; limit?: number },
-    filters?: any
-  ) {
-    return this.repo.listByUser(userId, options, filters)
-  }
-
-  public async getUnreadCount(userId: string): Promise<number> {
-    return this.repo.countUnread(userId)
-  }
-
-  public async getNotificationStats(userId: string) {
-    return this.repo.getStats(userId)
-  }
-
-  // Métodos de marcado / borrado
-
-  public async markAsRead(notificationId: string, userId: string): Promise<void> {
-    await this.repo.markAsRead(notificationId, userId)
-  }
-
-  public async markAllAsRead(userId: string): Promise<void> {
-    await this.repo.markAllAsRead(userId)
-  }
-
-  public async deleteNotification(notificationId: string, userId: string): Promise<void> {
-    await this.repo.delete(notificationId, userId)
-  }
-
-  public async clearReadNotifications(userId: string): Promise<void> {
-    await this.repo.deleteReadNotifications(userId)
+  async getUserNotifications(
+    userId: string, 
+    filters: NotificationFiltersDto = {}
+  ): Promise<NotificationResponseDto[]> {
+    const notifications = await this.repository.findByUserId(userId, filters)
+    return notifications.map(notif => this.toResponseDto(notif))
   }
 
   /**
-   * Genera una alerta automática cuando un sensor sale de su rango seguro.
+   * Marcar como leída
    */
-  public async createSensorAlert(
-    userId: string,
-    sensorType: string,
-    value: number,
-    threshold: number,
+  async markAsRead(id: string, userId: string): Promise<boolean> {
+    return await this.repository.markAsRead(id, userId)
+  }
+
+  /**
+   * Marcar todas como leídas
+   */
+  async markAllAsRead(userId: string): Promise<number> {
+    return await this.repository.markAllAsRead(userId)
+  }
+
+  /**
+   * Eliminar notificación
+   */
+  async delete(id: string, userId: string): Promise<boolean> {
+    return await this.repository.delete(id, userId)
+  }
+
+  /**
+   * Obtener conteo de no leídas
+   */
+  async getUnreadCount(userId: string): Promise<number> {
+    return await this.repository.getUnreadCount(userId)
+  }
+
+  /**
+   * MÉTODOS ESPECÍFICOS DEL DOMINIO
+   */
+
+  /**
+   * Crear alerta de sensor crítica
+   */
+  async createSensorAlert(data: {
+    userId: string
+    sensorType: string
+    sensorName: string
+    value: number
     unit: string
-  ): Promise<Notification> {
-    const priority = this.calculateSensorPriority(sensorType, value, threshold)
-
-    return this.sendNotification({
-      userId,
-      type: 'sensor',
-      title: `Alerta de ${sensorType}`,
-      message: `El sensor ${sensorType} registró ${value}${unit}, fuera del rango seguro (${threshold}${unit})`,
-      priority,
-      deliveryChannels: ['database', 'push', ...(priority === 'critical' ? ['email'] : [])],
-      data: { sensorType, value, threshold, unit, timestamp: new Date().toISOString() },
+    threshold: number
+    cascoId: string
+    location?: string
+  }): Promise<NotificationResponseDto> {
+    return await this.create({
+      userId: data.userId,
+      type: 'sensor_alert',
+      title: `🚨 Alerta: ${data.sensorName}`,
+      message: `Valor crítico detectado: ${data.value}${data.unit} (umbral: ${data.threshold}${data.unit})`,
+      priority: 'normal',
+      data: {
+        sensorType: data.sensorType,
+        sensorName: data.sensorName,
+        value: data.value,
+        unit: data.unit,
+        threshold: data.threshold,
+        cascoId: data.cascoId,
+        location: data.location,
+        timestamp: new Date().toISOString(),
+      }
     })
   }
 
-  private calculateSensorPriority(
-    sensorType: string,
-    value: number,
-    threshold: number
-  ): 'low' | 'medium' | 'high' | 'critical' {
-    const factor = sensorType === 'accelerometer' ? 0.2 : 0.1
-    const deviation = Math.abs(value - threshold) / threshold
+  /**
+   * Enviar mensaje de supervisor a mineros
+   */
+  async sendSupervisorMessage(data: {
+    userIds: string[]
+    title: string
+    message: string
+    supervisorName: string
+  }): Promise<NotificationResponseDto[]> {
+    const notifications = data.userIds.map(userId => ({
+      userId,
+      type: 'supervisor_message' as const,
+      title: data.title,
+      message: data.message,
+      priority: 'normal',
+      data: {
+        supervisorName: data.supervisorName,
+        timestamp: new Date().toISOString(),
+      }
+    }))
 
-    if (deviation > 0.5 + factor) return 'critical'
-    if (deviation > 0.3 + factor) return 'high'
-    if (deviation > 0.1 + factor) return 'medium'
-    return 'low'
+    return await this.createBulk(notifications)
   }
 
-  // Procesamiento batch (scheduler)
+  /**
+   * Notificación del sistema
+   */
+  async createSystemNotification(data: {
+    userId: string
+    title: string
+    message: string
+    priority?: string
+    data?: any
+  }): Promise<NotificationResponseDto> {
+    return await this.create({
+      userId: data.userId,
+      type: 'system',
+      title: data.title,
+      message: data.message,
+      priority: data.priority || 'normal',
+      data: data.data
+    })
+  }
 
   /**
-   * Procesa notificaciones pendientes de email y push (invocado desde un Job).
+   * MÉTODOS PRIVADOS
    */
-  public async processPendingNotifications(): Promise<void> {
-    // Emails pendientes
-    const pendingEmails = await this.repo.getPendingEmailNotifications()
-    await Promise.all(
-      pendingEmails.map(async (notif) => {
-        try {
-          await this.emailService.sendNotificationEmail(notif)
-          await this.repo.updateDeliveryStatus(notif.id, 'email', true)
-        } catch (err) {
-          console.error('Error procesando email pendiente:', err)
-        }
-      })
-    )
 
-    // Push pendientes
-    const pendingPush = await this.repo.getPendingPushNotifications()
-    await Promise.all(
-      pendingPush.map(async (notif) => {
-        try {
-          await this.pushService.sendNotificationPush(notif)
-          await this.repo.updateDeliveryStatus(notif.id, 'push', true)
-        } catch (err) {
-          console.error('Error procesando push pendiente:', err)
-        }
-      })
-    )
+  private async sendToChannels(notification: any): Promise<void> {
+    // 1. WebSocket en tiempo real (siempre)
+    await this.sendWebSocket(notification)
+
+    // 2. Email para todas las notificaciones
+    await this.sendEmail(notification)
+
+    // 3. Push notification para todas las notificaciones
+    await this.sendPush(notification)
+  }
+
+  private async sendWebSocket(notification: any): Promise<void> {
+    try {
+      if (wsService) {
+        wsService.emitNotification(notification.userId, {
+          id: notification.id,
+          type: notification.type,
+          title: notification.title,
+          message: notification.message,
+          priority: notification.priority,
+          data: notification.getData(),
+          createdAt: notification.createdAt.toISO(),
+        })
+      }
+    } catch (error) {
+      console.error('Error enviando WebSocket:', error)
+    }
+  }
+
+  private async sendEmail(notification: any): Promise<void> {
+    try {
+      // TODO: Implementar envío de email real
+      console.log(`📧 Email enviado: ${notification.title} → ${notification.userId}`)
+      // Aquí irías APIs como SendGrid, Nodemailer, etc.
+    } catch (error) {
+      console.error('Error enviando email:', error)
+    }
+  }
+
+  private async sendPush(notification: any): Promise<void> {
+    try {
+      // TODO: Implementar push notification real
+      console.log(`📱 Push notification enviado: ${notification.title} → ${notification.userId}`)
+      // Aquí irían APIs como Firebase, OneSignal, etc.
+    } catch (error) {
+      console.error('Error enviando push:', error)
+    }
+  }
+
+  private toResponseDto(notification: any): NotificationResponseDto {
+    return {
+      id: notification.id,
+      userId: notification.userId,
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      priority: notification.priority,
+      isRead: notification.isRead,
+      data: notification.getData(),
+      createdAt: notification.createdAt.toISO(),
+      updatedAt: notification.updatedAt?.toISO() || null,
+    }
   }
 }

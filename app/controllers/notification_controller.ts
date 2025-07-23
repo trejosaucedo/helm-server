@@ -1,140 +1,206 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { NotificationService } from '#services/notification_service'
-import {
-  paginationValidator,
-  idParamsValidator,
-  bulkCreateValidator,
-} from '#validators/notification'
+import { ErrorHandler } from '#utils/error_handler'
 
 export default class NotificationController {
-  private service = new NotificationService()
+  private service: NotificationService
 
-  /**
-   * GET /notifications
-   * Lista notificaciones del usuario autenticado (paginado)
-   */
-  public async index({ request, response, auth }: HttpContext & { auth: any }) {
-    const userId = auth.user!.id
-    const { page = 1, limit = 20, type, isRead } = await request.validateUsing(paginationValidator)
-
-    const filters = {
-      type: type || undefined,
-      isRead: isRead !== undefined ? isRead : undefined,
-    }
-
-    const notifications = await this.service.getUserNotifications(userId, { page, limit }, filters)
-
-    return response.ok({
-      success: true,
-      data: notifications,
-    })
+  constructor() {
+    this.service = new NotificationService()
   }
 
   /**
-   * POST /notifications/bulk
-   * Crea múltiples notificaciones (solo admin/supervisor)
+   * GET /notifications - Obtener notificaciones del usuario
    */
-  public async bulkStore({ request, response, auth }: HttpContext & { auth: any }) {
-    const user = auth.user!
+  async index({ request, response, user }: HttpContext) {
+    try {
+      if (!user) {
+        return response.status(401).json({ success: false, message: 'No autenticado' })
+      }
 
-    if (!['admin', 'supervisor'].includes(user.role)) {
-      return response.forbidden({
+      const page = request.input('page', 1)
+      const limit = request.input('limit', 20)
+      const type = request.input('type')
+      const isRead = request.input('isRead')
+
+      const notifications = await this.service.getUserNotifications(user.id, {
+        page,
+        limit,
+        type,
+        isRead: isRead !== undefined ? isRead === 'true' : undefined,
+      })
+
+      return response.json({
+        success: true,
+        message: 'Notificaciones obtenidas exitosamente',
+        data: notifications,
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'NOTIFICATION_INDEX')
+      return response.status(500).json({
         success: false,
-        message: 'Solo administradores y supervisores pueden crear notificaciones',
+        message: 'Error al obtener notificaciones',
       })
     }
-
-    const { notifications } = await request.validateUsing(bulkCreateValidator)
-
-    const createdNotifications = await this.service.sendBulkNotifications(notifications)
-
-    return response.created({
-      success: true,
-      data: createdNotifications,
-    })
   }
 
   /**
-   * POST /notifications/:id/read
-   * Marca una notificación como leída
+   * GET /notifications/unread-count - Conteo de no leídas
    */
-  public async markRead({ params, response, auth }: HttpContext & { auth: any }) {
-    const { id } = await params.validateUsing(idParamsValidator)
-    const userId = auth.user!.id
+  async unreadCount({ response, user }: HttpContext) {
+    try {
+      if (!user) {
+        return response.status(401).json({ success: false, message: 'No autenticado' })
+      }
 
-    await this.service.markAsRead(id, userId)
+      const count = await this.service.getUnreadCount(user.id)
 
-    return response.ok({
-      success: true,
-    })
+      return response.json({
+        success: true,
+        data: { count },
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'NOTIFICATION_UNREAD_COUNT')
+      return response.status(500).json({
+        success: false,
+        message: 'Error al obtener conteo',
+      })
+    }
   }
 
   /**
-   * POST /notifications/read-all
-   * Marca todas las notificaciones del usuario autenticado como leídas
+   * POST /notifications/:id/read - Marcar como leída
    */
-  public async markAllRead({ auth, response }: HttpContext & { auth: any }) {
-    const userId = auth.user!.id
+  async markAsRead({ params, response, user }: HttpContext) {
+    try {
+      if (!user) {
+        return response.status(401).json({ success: false, message: 'No autenticado' })
+      }
 
-    await this.service.markAllAsRead(userId)
+      const success = await this.service.markAsRead(params.id, user.id)
 
-    return response.ok({
-      success: true,
-    })
+      if (!success) {
+        return response.status(404).json({
+          success: false,
+          message: 'Notificación no encontrada',
+        })
+      }
+
+      return response.json({
+        success: true,
+        message: 'Notificación marcada como leída',
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'NOTIFICATION_MARK_READ')
+      return response.status(500).json({
+        success: false,
+        message: 'Error al marcar notificación',
+      })
+    }
   }
 
   /**
-   * DELETE /notifications/:id
-   * Elimina una notificación por ID
+   * POST /notifications/read-all - Marcar todas como leídas
    */
-  public async destroy({ params, response, auth }: HttpContext & { auth: any }) {
-    const { id } = await params.validateUsing(idParamsValidator)
-    const userId = auth.user!.id
+  async markAllAsRead({ response, user }: HttpContext) {
+    try {
+      if (!user) {
+        return response.status(401).json({ success: false, message: 'No autenticado' })
+      }
 
-    await this.service.deleteNotification(id, userId)
+      const count = await this.service.markAllAsRead(user.id)
 
-    return response.noContent()
+      return response.json({
+        success: true,
+        message: `${count} notificaciones marcadas como leídas`,
+        data: { count },
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'NOTIFICATION_MARK_ALL_READ')
+      return response.status(500).json({
+        success: false,
+        message: 'Error al marcar notificaciones',
+      })
+    }
   }
 
   /**
-   * DELETE /notifications/clear
-   * Elimina todas las notificaciones leídas del usuario autenticado
+   * DELETE /notifications/:id - Eliminar notificación
    */
-  public async clearRead({ auth, response }: HttpContext & { auth: any }) {
-    const userId = auth.user!.id
+  async delete({ params, response, user }: HttpContext) {
+    try {
+      if (!user) {
+        return response.status(401).json({ success: false, message: 'No autenticado' })
+      }
 
-    await this.service.clearReadNotifications(userId)
+      const success = await this.service.delete(params.id, user.id)
 
-    return response.noContent()
+      if (!success) {
+        return response.status(404).json({
+          success: false,
+          message: 'Notificación no encontrada',
+        })
+      }
+
+      return response.json({
+        success: true,
+        message: 'Notificación eliminada',
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'NOTIFICATION_DELETE')
+      return response.status(500).json({
+        success: false,
+        message: 'Error al eliminar notificación',
+      })
+    }
   }
 
   /**
-   * GET /notifications/count
-   * Obtiene el conteo de notificaciones no leídas
+   * POST /notifications/supervisor-message - Enviar mensaje masivo (solo supervisores)
    */
-  public async unreadCount({ auth, response }: HttpContext & { auth: any }) {
-    const userId = auth.user!.id
+  async sendSupervisorMessage({ request, response, user }: HttpContext) {
+    try {
+      if (!user || !['supervisor', 'admin'].includes(user.role)) {
+        return response.status(403).json({
+          success: false,
+          message: 'Solo supervisores pueden enviar mensajes masivos',
+        })
+      }
 
-    const count = await this.service.getUnreadCount(userId)
+      const { userIds, title, message } = request.body()
 
-    return response.ok({
-      success: true,
-      data: { unreadCount: count },
-    })
-  }
+      if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+        return response.status(400).json({
+          success: false,
+          message: 'userIds es requerido y debe ser un array con al menos un ID',
+        })
+      }
 
-  /**
-   * GET /notifications/stats
-   * Obtiene estadísticas de notificaciones
-   */
-  public async stats({ auth, response }: HttpContext & { auth: any }) {
-    const userId = auth.user!.id
+      if (!title || !message) {
+        return response.status(400).json({
+          success: false,
+          message: 'title y message son requeridos',
+        })
+      }
 
-    const stats = await this.service.getNotificationStats(userId)
+      const notifications = await this.service.sendSupervisorMessage({
+        userIds,
+        title,
+        message,
+        supervisorName: user.fullName || user.email,
+      })
 
-    return response.ok({
-      success: true,
-      data: stats,
-    })
+      return response.status(201).json({
+        success: true,
+        message: `Mensaje enviado a ${notifications.length} usuarios`,
+        data: notifications,
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'NOTIFICATION_SUPERVISOR_MESSAGE')
+      return response.status(500).json({
+        success: false,
+        message: 'Error al enviar mensaje',
+      })
+    }
   }
 }

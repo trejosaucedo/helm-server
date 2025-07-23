@@ -43,26 +43,13 @@ router.delete('/cascos/:id', '#controllers/casco_controller.deleteCasco').use(mi
 router
   .group(() => {
     router.get('/', '#controllers/notification_controller.index')
-    router.get('/count', '#controllers/notification_controller.unreadCount')
-    router.post('/:id/read', '#controllers/notification_controller.markRead')
-    router.post('/read-all', '#controllers/notification_controller.markAllRead')
-    router.delete('/:id', '#controllers/notification_controller.destroy')
-    router.delete('/clear', '#controllers/notification_controller.clearRead')
+    router.get('/unread-count', '#controllers/notification_controller.unreadCount')
+    router.post('/:id/read', '#controllers/notification_controller.markAsRead')
+    router.post('/read-all', '#controllers/notification_controller.markAllAsRead')
+    router.delete('/:id', '#controllers/notification_controller.delete')
+    router.post('/supervisor-message', '#controllers/notification_controller.sendSupervisorMessage')
   })
   .prefix('/notifications')
-  .use(middleware.auth())
-
-router
-  .post('/notifications/bulk', '#controllers/notification_controller.bulkStore')
-  .use(middleware.auth('admin'))
-router
-  .get('/notifications/stats', '#controllers/notification_controller.stats')
-  .use(middleware.auth('admin'))
-router
-  .post('/notifications/supervisor', '#controllers/notification_controller.sendSupervisorMessage')
-  .use(middleware.auth('supervisor'))
-router
-  .post('/device-tokens', '#controllers/notification_controller.registerDeviceToken')
   .use(middleware.auth())
 
 // --- Sensores: administración (SensorController) ---

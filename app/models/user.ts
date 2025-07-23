@@ -90,7 +90,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @hasMany(() => Notification, {
     foreignKey: 'userId',
   })
-  declare notificaciones: HasMany<typeof Notification>
+  declare notifications: HasMany<typeof Notification>
 
   // Mensajes enviados
   @hasMany(() => Message, {

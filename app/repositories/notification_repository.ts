@@ -1,178 +1,105 @@
-import { DateTime } from 'luxon'
 import Notification from '#models/notification'
-
-export interface CreateNotificationAttrs {
-  userId: string
-  type: 'general' | 'sensor' | 'supervisor'
-  title: string
-  message: string
-  data?: any
-  priority?: 'low' | 'medium' | 'high' | 'critical'
-  deliveryChannels?: string[]
-}
-
-export interface NotificationFilters {
-  type?: 'general' | 'sensor' | 'supervisor'
-  isRead?: boolean
-  priority?: 'low' | 'medium' | 'high' | 'critical'
-}
+import type { CreateNotificationDto, NotificationFiltersDto } from '#dtos/notification.dto'
 
 export class NotificationRepository {
-  public async createNotification(attrs: CreateNotificationAttrs): Promise<Notification> {
-    const notification = new Notification()
-    notification.userId = attrs.userId
-    notification.type = attrs.type
-    notification.title = attrs.title
-    notification.message = attrs.message
-    notification.priority = attrs.priority || 'medium'
-    notification.setDeliveryChannels(attrs.deliveryChannels || ['database'])
-    notification.isError = false
-    notification.emailSent = false
-    notification.pushSent = false
-
-    if (attrs.data !== undefined) {
-      notification.setData(attrs.data)
-    }
-
-    await notification.save()
-    return notification
+  
+  async create(data: CreateNotificationDto): Promise<Notification> {
+    return await Notification.create({
+      userId: data.userId,
+      type: data.type,
+      title: data.title,
+      message: data.message,
+      priority: data.priority || 'normal',
+      isRead: false,
+      data: data.data ? JSON.stringify(data.data) : null,
+    })
   }
 
-  public async bulkCreateNotifications(
-    notifications: CreateNotificationAttrs[]
+  async findById(id: string): Promise<Notification | null> {
+    return await Notification.find(id)
+  }
+
+  async findByUserId(
+    userId: string, 
+    filters: NotificationFiltersDto = {}
   ): Promise<Notification[]> {
-    const createdNotifications: Notification[] = []
+    const query = Notification.query().where('userId', userId)
 
-    for (const attrs of notifications) {
-      const notification = await this.createNotification(attrs)
-      createdNotifications.push(notification)
-    }
-
-    return createdNotifications
-  }
-
-  public async listByUser(
-    userId: string,
-    options: { page?: number; limit?: number } = {},
-    filters: NotificationFilters = {}
-  ) {
-    const page = options.page ?? 1
-    const limit = options.limit ?? 20
-
-    let query = Notification.query().where('user_id', userId)
-
-    // Aplicar filtros
     if (filters.type) {
-      query = query.where('type', filters.type)
+      query.where('type', filters.type)
     }
 
     if (filters.isRead !== undefined) {
-      query = query.where('is_read', filters.isRead)
+      query.where('isRead', filters.isRead)
     }
 
-    if (filters.priority) {
-      query = query.where('priority', filters.priority)
+    query.orderBy('createdAt', 'desc')
+
+    if (filters.limit) {
+      query.limit(filters.limit)
     }
 
-    return query.orderBy('created_at', 'desc').paginate(page, limit)
+    if (filters.page && filters.limit) {
+      const offset = (filters.page - 1) * filters.limit
+      query.offset(offset)
+    }
+
+    return await query
   }
 
-  public async markAsRead(notificationId: string, userId: string): Promise<void> {
-    await Notification.query().where('id', notificationId).where('user_id', userId).update({
-      is_read: true,
-      read_at: DateTime.local(),
-      updated_at: DateTime.local(),
-    })
+  async markAsRead(id: string, userId: string): Promise<boolean> {
+    const notification = await Notification.query()
+      .where('id', id)
+      .where('userId', userId)
+      .first()
+
+    if (!notification) return false
+
+    notification.isRead = true
+    await notification.save()
+    return true
   }
 
-  public async markAllAsRead(userId: string): Promise<void> {
-    await Notification.query().where('user_id', userId).where('is_read', false).update({
-      is_read: true,
-      read_at: DateTime.local(),
-      updated_at: DateTime.local(),
-    })
-  }
-
-  public async countUnread(userId: string): Promise<number> {
+  async markAllAsRead(userId: string): Promise<number> {
     const result = await Notification.query()
-      .where('user_id', userId)
-      .andWhere('is_read', false)
-      .count('id as total')
+      .where('userId', userId)
+      .where('isRead', false)
+      .update({ isRead: true })
 
-    return Number(result[0].$extras.total)
+    return result[0]
   }
 
-  public async getStats(userId: string) {
-    const stats = await Notification.query()
-      .where('user_id', userId)
-      .select('type', 'priority', 'is_read', 'is_error')
-      .exec()
+  async delete(id: string, userId: string): Promise<boolean> {
+    const notification = await Notification.query()
+      .where('id', id)
+      .where('userId', userId)
+      .first()
 
-    return {
-      total: stats.length,
-      unread: stats.filter((n) => !n.isRead).length,
-      byType: {
-        general: stats.filter((n) => n.type === 'general').length,
-        sensor: stats.filter((n) => n.type === 'sensor').length,
-        supervisor: stats.filter((n) => n.type === 'supervisor').length,
-      },
-      byPriority: {
-        low: stats.filter((n) => n.priority === 'low').length,
-        medium: stats.filter((n) => n.priority === 'medium').length,
-        high: stats.filter((n) => n.priority === 'high').length,
-        critical: stats.filter((n) => n.priority === 'critical').length,
-      },
-      errors: stats.filter((n) => n.isError).length,
-    }
+    if (!notification) return false
+
+    await notification.delete()
+    return true
   }
 
-  public async findById(id: string): Promise<Notification | null> {
-    return Notification.find(id)
+  async getUnreadCount(userId: string): Promise<number> {
+    return await Notification.query()
+      .where('userId', userId)
+      .where('isRead', false)
+      .count('* as total')
+      .then(result => result[0].$extras.total)
   }
 
-  public async findByIdAndUser(id: string, userId: string): Promise<Notification | null> {
-    return Notification.query().where('id', id).where('user_id', userId).first()
-  }
+  async bulkCreate(notifications: CreateNotificationDto[]): Promise<Notification[]> {
+    const data = notifications.map(notif => ({
+      userId: notif.userId,
+      type: notif.type,
+      title: notif.title,
+      message: notif.message,
+      priority: notif.priority || 'normal',
+      isRead: false,
+      data: notif.data ? JSON.stringify(notif.data) : null,
+    }))
 
-  public async delete(id: string, userId: string): Promise<void> {
-    await Notification.query().where('id', id).where('user_id', userId).delete()
-  }
-
-  public async deleteReadNotifications(userId: string): Promise<void> {
-    await Notification.query().where('user_id', userId).andWhere('is_read', true).delete()
-  }
-
-  public async updateDeliveryStatus(
-    id: string,
-    channel: 'email' | 'push',
-    sent: boolean
-  ): Promise<void> {
-    const updateData: any = { updated_at: DateTime.local() }
-
-    if (channel === 'email') {
-      updateData.email_sent = sent
-    } else if (channel === 'push') {
-      updateData.push_sent = sent
-    }
-
-    await Notification.query().where('id', id).update(updateData)
-  }
-
-  public async getPendingEmailNotifications(): Promise<Notification[]> {
-    return Notification.query()
-      .where('email_sent', false)
-      .whereIn('priority', ['high', 'critical'])
-      .whereRaw('JSON_CONTAINS(delivery_channels, \'"email"\')')
-      .preload('user')
-      .exec()
-  }
-
-  public async getPendingPushNotifications(): Promise<Notification[]> {
-    return Notification.query()
-      .where('push_sent', false)
-      .whereIn('priority', ['medium', 'high', 'critical'])
-      .whereRaw('JSON_CONTAINS(delivery_channels, \'"push"\')')
-      .preload('user')
-      .exec()
+    return await Notification.createMany(data)
   }
 }

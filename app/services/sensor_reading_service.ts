@@ -84,9 +84,20 @@ export class SensorReadingService {
         5
       )
 
-      if (isAlert) await this.generateAlertNotification(reading, sensor)
-      // aquí emitir websockets si quieres
-
+      // Generar alerta si es necesario
+      if (isAlert && reading.mineroId && sensor.alertThreshold !== null) {
+        await this.notificationService.createSensorAlert({
+          userId: reading.mineroId,
+          sensorType: sensor.type,
+          sensorName: sensor.name,
+          value: reading.value,
+          unit: reading.unit,
+          threshold: sensor.alertThreshold,
+          cascoId: reading.cascoId,
+          location: reading.location ? JSON.stringify(reading.location) : undefined,
+        })
+      }
+      
       return reading
     } finally {
       await this.disconnect()
@@ -174,32 +185,6 @@ export class SensorReadingService {
       ['heart_rate', 'body_temperature', 'gas'].includes(sensor.type) &&
       value > sensor.alertThreshold
     )
-  }
-
-  private async generateAlertNotification(
-    reading: SensorReadingDocument,
-    sensor: any
-  ): Promise<void> {
-    if (!reading.mineroId) return
-    const alertData = {
-      sensorType: sensor.type,
-      sensorName: sensor.name,
-      value: reading.value,
-      unit: reading.unit,
-      threshold: sensor.alertThreshold,
-      timestamp: reading.timestamp,
-      cascoId: reading.cascoId,
-      location: reading.location,
-    }
-    await this.notificationService.sendNotification({
-      userId: reading.mineroId,
-      type: 'sensor',
-      title: `🚨 Alerta de ${sensor.name}`,
-      message: `Valor crítico detectado: ${reading.value}${reading.unit}`,
-      priority: 'critical',
-      data: alertData,
-      deliveryChannels: ['database', 'email', 'push'],
-    })
   }
 
   async publishSensorData(input: PublishSensorDataInput): Promise<void> {
