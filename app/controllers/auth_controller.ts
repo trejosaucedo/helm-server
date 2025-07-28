@@ -159,6 +159,27 @@ export default class AuthController {
     }
   }
 
+  async listMinersBySupervisor({ response, user }: HttpContext) {
+    try {
+      const miners = await this.userRepository.getMinerosBySupervisor(user.id)
+      return response.json({ success: true, message: 'Mineros del supervisor obtenidos exitosamente', data: miners })
+    } catch (error) {
+      ErrorHandler.logError(error, 'LIST_MINERS_BY_SUPERVISOR')
+      return response.status(500).json({ success: false, message: 'Error al obtener mineros del supervisor', data: null })
+    }
+  }
+
+  async minersStatsBySupervisor({ response, user }: HttpContext) {
+    try {
+      const miners = await this.userRepository.getMinerosBySupervisor(user.id)
+      const total = miners.length
+      return response.json({ success: true, message: 'Estadísticas de mineros del supervisor obtenidas exitosamente', data: { total } })
+    } catch (error) {
+      ErrorHandler.logError(error, 'MINERS_STATS_BY_SUPERVISOR')
+      return response.status(500).json({ success: false, message: 'Error al obtener estadísticas de mineros del supervisor', data: null })
+    }
+  }
+
   async getAccessCodesByEmail({ params, response }: HttpContext) {
     try {
       const email = decodeURIComponent(params.email)

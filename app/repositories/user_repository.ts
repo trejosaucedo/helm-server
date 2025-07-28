@@ -98,11 +98,9 @@ export class UserRepository {
   }
 
   async getMinerosBySupervisor(supervisorId: string): Promise<User[]> {
-    // Obtiene los mineros que tienen cascos asignados por este supervisor
+    // Obtiene los mineros que están asignados a este supervisor
     return await User.query()
       .where('role', 'minero')
-      .whereHas('cascos', (query) => {
-        query.where('supervisor_id', supervisorId)
-      })
+      .where('supervisorId', supervisorId)
   }
 }

@@ -108,4 +108,11 @@ export class CascoRepository {
   async getAllCascos() {
     return await Casco.all()
   }
+
+  async getCascosBySupervisor(supervisorId: string): Promise<Casco[]> {
+    return await Casco.query()
+      .where('supervisor_id', supervisorId)
+      .preload('minero')
+      .orderBy('created_at', 'desc')
+  }
 }

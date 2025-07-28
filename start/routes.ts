@@ -129,6 +129,10 @@ router.post('/mineros', '#controllers/auth_controller.registerMinero').use(middl
 router.put('/mineros/:id', '#controllers/auth_controller.updateMinero').use(middleware.auth('admin'))
 router.delete('/mineros/:id', '#controllers/auth_controller.deleteMinero').use(middleware.auth('admin'))
 
+// --- Mineros para Supervisores ---
+router.get('/supervisor/mineros', '#controllers/auth_controller.listMinersBySupervisor').use(middleware.auth('supervisor'))
+router.get('/supervisor/mineros/stats', '#controllers/auth_controller.minersStatsBySupervisor').use(middleware.auth('supervisor'))
+
 // --- Health check ---
 router.get('/health', ({ response }) => {
   return response.json({
@@ -138,3 +142,7 @@ router.get('/health', ({ response }) => {
     version: '1.0.0',
   })
 })
+
+// --- Dashboard ---
+router.get('/dashboard', '#controllers/dashboard_controller.getDashboardData').use(middleware.auth())
+router.get('/dashboard/teams', '#controllers/dashboard_controller.getTeamsData').use(middleware.auth())
