@@ -38,4 +38,8 @@ export class AccessCodeRepository {
   async getCodeByEmail(email: string) {
     return await AccessCode.query().where('correo_supervisor', email).orderBy('fecha_generacion', 'desc').first()
   }
+
+  async getAllCodes() {
+    return await AccessCode.query().orderBy('fecha_generacion', 'desc')
+  }
 }

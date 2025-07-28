@@ -227,4 +227,22 @@ export default class AuthController {
       return response.status(400).json({ success: false, message: 'Error al obtener detalle de minero', data: null });
     }
   }
+
+  async getAllAccessCodes({ response }: HttpContext) {
+    try {
+      const codes = await this.accessCodeRepository.getAllCodes();
+      return response.json({ 
+        success: true, 
+        message: 'Códigos de acceso obtenidos exitosamente', 
+        data: codes 
+      });
+    } catch (error) {
+      ErrorHandler.logError(error, 'GET_ALL_ACCESS_CODES');
+      return response.status(500).json({ 
+        success: false, 
+        message: 'Error al obtener códigos de acceso', 
+        data: null 
+      });
+    }
+  }
 }
