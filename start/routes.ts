@@ -142,7 +142,3 @@ router.get('/health', ({ response }) => {
     version: '1.0.0',
   })
 })
-
-// --- Dashboard ---
-router.get('/dashboard', '#controllers/dashboard_controller.getDashboardData').use(middleware.auth())
-router.get('/dashboard/teams', '#controllers/dashboard_controller.getTeamsData').use(middleware.auth())
