@@ -53,7 +53,9 @@ export default class CascoController {
     try {
       const user = ctx.user
       if (!user) {
-        return ctx.response.status(401).json({ success: false, message: 'No autenticado', data: null })
+        return ctx.response
+          .status(401)
+          .json({ success: false, message: 'No autenticado', data: null })
       }
       // Si es admin, puede ver todos los cascos; si es supervisor, solo los suyos
       let cascos
@@ -62,10 +64,16 @@ export default class CascoController {
       } else {
         cascos = await this.cascoService.getCascosBySupervisor(user.id)
       }
-      return ctx.response.json({ success: true, message: 'Cascos obtenidos exitosamente', data: cascos })
+      return ctx.response.json({
+        success: true,
+        message: 'Cascos obtenidos exitosamente',
+        data: cascos,
+      })
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_MY_HELMETS')
-      return ctx.response.status(500).json({ success: false, message: 'Error al obtener cascos', data: null })
+      return ctx.response
+        .status(500)
+        .json({ success: false, message: 'Error al obtener cascos', data: null })
     }
   }
 
@@ -180,47 +188,67 @@ export default class CascoController {
 
   async getCasco({ params, response }: HttpContext) {
     try {
-      const id = params.id;
-      const casco = await this.cascoService.cascoRepository.findById(id);
+      const id = params.id
+      const casco = await this.cascoService.cascoRepository.findById(id)
       if (!casco) {
-        return response.status(404).json({ success: false, message: 'Casco no encontrado', data: null });
+        return response
+          .status(404)
+          .json({ success: false, message: 'Casco no encontrado', data: null })
       }
-      return response.json({ success: true, message: 'Detalle de casco obtenido exitosamente', data: casco });
+      return response.json({
+        success: true,
+        message: 'Detalle de casco obtenido exitosamente',
+        data: casco,
+      })
     } catch (error) {
-      ErrorHandler.logError(error, 'GET_CASCO_DETAIL');
-      return response.status(400).json({ success: false, message: 'Error al obtener detalle de casco', data: null });
+      ErrorHandler.logError(error, 'GET_CASCO_DETAIL')
+      return response
+        .status(400)
+        .json({ success: false, message: 'Error al obtener detalle de casco', data: null })
     }
   }
 
   async updateCasco({ params, request, response }: HttpContext) {
     try {
-      const id = params.id;
-      const payload = await request.validateUsing(updateCascoValidator);
-      const casco = await this.cascoService.cascoRepository.findById(id);
+      const id = params.id
+      const payload = await request.validateUsing(updateCascoValidator)
+      const casco = await this.cascoService.cascoRepository.findById(id)
       if (!casco) {
-        return response.status(404).json({ success: false, message: 'Casco no encontrado', data: null });
+        return response
+          .status(404)
+          .json({ success: false, message: 'Casco no encontrado', data: null })
       }
-      Object.assign(casco, payload);
-      await casco.save();
-      return response.json({ success: true, message: 'Casco actualizado exitosamente', data: casco });
+      Object.assign(casco, payload)
+      await casco.save()
+      return response.json({
+        success: true,
+        message: 'Casco actualizado exitosamente',
+        data: casco,
+      })
     } catch (error) {
-      ErrorHandler.logError(error, 'UPDATE_CASCO');
-      return response.status(400).json({ success: false, message: 'Error al actualizar casco', data: null });
+      ErrorHandler.logError(error, 'UPDATE_CASCO')
+      return response
+        .status(400)
+        .json({ success: false, message: 'Error al actualizar casco', data: null })
     }
   }
 
   async deleteCasco({ params, response }: HttpContext) {
     try {
-      const id = params.id;
-      const casco = await this.cascoService.cascoRepository.findById(id);
+      const id = params.id
+      const casco = await this.cascoService.cascoRepository.findById(id)
       if (!casco) {
-        return response.status(404).json({ success: false, message: 'Casco no encontrado', data: null });
+        return response
+          .status(404)
+          .json({ success: false, message: 'Casco no encontrado', data: null })
       }
-      await casco.delete();
-      return response.json({ success: true, message: 'Casco eliminado exitosamente' });
+      await casco.delete()
+      return response.json({ success: true, message: 'Casco eliminado exitosamente' })
     } catch (error) {
-      ErrorHandler.logError(error, 'DELETE_CASCO');
-      return response.status(400).json({ success: false, message: 'Error al eliminar casco', data: null });
+      ErrorHandler.logError(error, 'DELETE_CASCO')
+      return response
+        .status(400)
+        .json({ success: false, message: 'Error al eliminar casco', data: null })
     }
   }
 
