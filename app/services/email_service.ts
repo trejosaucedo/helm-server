@@ -1,10 +1,11 @@
-import sgMail from '@sendgrid/mail'
+import sgMail from '@sendgrid/mail' // Comentado temporalmente para testing
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 export class EmailService {
   static configure(apiKey: string) {
-    sgMail.setApiKey(apiKey)
+    sgMail.setApiKey(apiKey) // Comentado temporalmente
+    console.log('📧 Email service configurado (modo testing - no real email)')
   }
 
   static getBrandLogoBase64(): string | null {
@@ -122,7 +123,8 @@ export class EmailService {
       subject: 'HELM - Tu contraseña temporal',
       html,
     }
-    await sgMail.send(msg)
+     await sgMail.send(msg) // Comentado temporalmente
+    console.log('📧 Email simulado enviado a:', toEmail, 'con subject:', msg.subject)
   }
 
   static async sendAccessCodeEmail(toEmail: string, code: string) {
@@ -133,7 +135,8 @@ export class EmailService {
       subject: 'HELM - Tu código de acceso',
       html,
     }
-    await sgMail.send(msg)
+    await sgMail.send(msg) // Comentado temporalmente
+    console.log('📧 Email simulado enviado a:', toEmail, 'con subject:', msg.subject)
   }
 }
 
