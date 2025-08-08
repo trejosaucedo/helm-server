@@ -144,7 +144,9 @@ router.get('/mineros', '#controllers/auth_controller.listMiners').use(middleware
 router
   .get('/mineros/stats', '#controllers/auth_controller.minersStats')
   .use(middleware.auth('admin'))
-router.get('/mineros/:id', '#controllers/auth_controller.getMinero').use(middleware.auth('admin'))
+router
+  .get('/mineros/:id', '#controllers/auth_controller.getMinero')
+  .use(middleware.auth(['admin', 'supervisor']))
 router
   .get('/access-codes', '#controllers/auth_controller.getAllAccessCodes')
   .use(middleware.auth('admin'))
@@ -156,19 +158,10 @@ router
   .use(middleware.auth(['admin', 'supervisor']))
 router
   .put('/mineros/:id', '#controllers/auth_controller.updateMinero')
-  .use(middleware.auth('admin'))
+  .use(middleware.auth(['admin', 'supervisor']))
 router
   .delete('/mineros/:id', '#controllers/auth_controller.deleteMinero')
   .use(middleware.auth('admin'))
-
-router.get('/mineros/stats', '#controllers/auth_controller.minersStats').use(middleware.auth('admin'))
-router.get('/mineros/:id', '#controllers/auth_controller.getMinero').use(middleware.auth(['admin', 'supervisor']))
-router.get('/access-codes', '#controllers/auth_controller.getAllAccessCodes').use(middleware.auth('admin'))
-router.get('/access-codes/:email', '#controllers/auth_controller.getAccessCodesByEmail').use(middleware.auth('admin'))
-router.post('/mineros', '#controllers/auth_controller.registerMinero').use(middleware.auth(['admin', 'supervisor']))
-router.put('/mineros/:id', '#controllers/auth_controller.updateMinero').use(middleware.auth(['admin', 'supervisor']))
-router.delete('/mineros/:id', '#controllers/auth_controller.deleteMinero').use(middleware.auth('admin'))
-
 
 // --- Mineros para Supervisores ---
 router
