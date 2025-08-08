@@ -6,9 +6,9 @@ import {
   changePasswordValidator,
   emailValidator,
   updateMineroValidator,
-  updateProfileValidator,
 } from '#validators/auth'
 import { AuthService } from '#services/auth_service'
+import { updateProfileValidator } from '#validators/auth'
 import { ErrorHandler } from '#utils/error_handler'
 import { TokenUtils } from '#utils/token_utils'
 import { withUser, withSession } from '#utils/controller_helpers'
@@ -71,7 +71,7 @@ export default class AuthController {
     )
   })
 
-  // Perfil actual del usuario autenticado
+  // Obtiene el perfil del usuario autenticado (alias de /me para compatibilidad frontend)
   getProfile = withUser(async (user, { response }) => {
     return TokenUtils.successResponse(
       response,
@@ -80,8 +80,9 @@ export default class AuthController {
     )
   })
 
-  // Actualizar perfil del usuario autenticado
+  // Actualiza datos básicos del perfil del usuario autenticado
   updateProfile = withUser(async (user, { request, response }) => {
+<<<<<<< HEAD
     if (user.role === 'admin') {
       return response.status(403).json({
         success: false,
@@ -101,6 +102,23 @@ export default class AuthController {
       'Perfil actualizado exitosamente',
       TokenUtils.formatUserData(updated)
     )
+=======
+    try {
+      const body = await request.validateUsing(updateProfileValidator)
+      const updated = await this.userRepository.update({ id: user.id, ...body } as any)
+      if (!updated) {
+        return ResponseHelper.error(response, 'Usuario no encontrado', 404)
+      }
+      return TokenUtils.successResponse(
+        response,
+        'Perfil actualizado exitosamente',
+        TokenUtils.formatUserData(updated)
+      )
+    } catch (error) {
+      ErrorHandler.logError(error, 'AUTH_UPDATE_PROFILE')
+      return ErrorHandler.handleError(error, response, 'Error al actualizar perfil', 400)
+    }
+>>>>>>> eb9c49f1a36c2a6b9fa38a427414bc97fdf3015f
   })
 
   changePassword = withUser(async (user, { request, response }) => {
@@ -204,9 +222,11 @@ export default class AuthController {
     }
   }
 
-  async listMinersBySupervisor({ response, user }: HttpContext) {
+  async listMinersBySupervisor(ctx: HttpContext) {
     try {
+      const user = (ctx as any).user
       const miners = await this.userRepository.getMinerosBySupervisor(user.id)
+<<<<<<< HEAD
       return response.json({
         success: true,
         message: 'Mineros del supervisor obtenidos exitosamente',
@@ -217,13 +237,21 @@ export default class AuthController {
       return response
         .status(500)
         .json({ success: false, message: 'Error al obtener mineros del supervisor', data: null })
+=======
+      return ctx.response.json({ success: true, message: 'Mineros del supervisor obtenidos exitosamente', data: miners })
+    } catch (error) {
+      ErrorHandler.logError(error, 'LIST_MINERS_BY_SUPERVISOR')
+      return ctx.response.status(500).json({ success: false, message: 'Error al obtener mineros del supervisor', data: null })
+>>>>>>> eb9c49f1a36c2a6b9fa38a427414bc97fdf3015f
     }
   }
 
-  async minersStatsBySupervisor({ response, user }: HttpContext) {
+  async minersStatsBySupervisor(ctx: HttpContext) {
     try {
+      const user = (ctx as any).user
       const miners = await this.userRepository.getMinerosBySupervisor(user.id)
       const total = miners.length
+<<<<<<< HEAD
       return response.json({
         success: true,
         message: 'Estadísticas de mineros del supervisor obtenidas exitosamente',
@@ -236,6 +264,12 @@ export default class AuthController {
         message: 'Error al obtener estadísticas de mineros del supervisor',
         data: null,
       })
+=======
+      return ctx.response.json({ success: true, message: 'Estadísticas de mineros del supervisor obtenidas exitosamente', data: { total } })
+    } catch (error) {
+      ErrorHandler.logError(error, 'MINERS_STATS_BY_SUPERVISOR')
+      return ctx.response.status(500).json({ success: false, message: 'Error al obtener estadísticas de mineros del supervisor', data: null })
+>>>>>>> eb9c49f1a36c2a6b9fa38a427414bc97fdf3015f
     }
   }
 
@@ -280,12 +314,25 @@ export default class AuthController {
     }
   }
 
-  async updateMinero({ request, response, params }: HttpContext) {
+  async updateMinero(ctx: HttpContext) {
     try {
+      const req = (ctx as any).request
+      const res = (ctx as any).response
+      const params = (ctx as any).params
+      const user = (ctx as any).user
       const id = params.id
-      const payload = await request.validateUsing(updateMineroValidator)
+      const payload = await req.validateUsing(updateMineroValidator)
+      // Autorización: admin siempre; supervisor sólo si el minero le pertenece
+      if (user && user.role === 'supervisor') {
+        const target = await this.userRepository.findById(id)
+        if (!target || target.role !== 'minero' || target.supervisorId !== user.id) {
+          return ResponseHelper.forbidden(res, 'No tienes acceso a esta sección')
+        }
+      }
+
       const updated = await this.userRepository.updateMinero({ id, ...payload })
       if (!updated) {
+<<<<<<< HEAD
         return response
           .status(404)
           .json({ success: false, message: 'Minero no encontrado', data: null })
@@ -300,6 +347,14 @@ export default class AuthController {
       return response
         .status(400)
         .json({ success: false, message: 'Error al actualizar minero', data: null })
+=======
+        return res.status(404).json({ success: false, message: 'Minero no encontrado', data: null })
+      }
+      return res.json({ success: true, message: 'Minero actualizado exitosamente', data: updated })
+    } catch (error) {
+      ErrorHandler.logError(error, 'UPDATE_MINERO')
+      return (ctx as any).response.status(400).json({ success: false, message: 'Error al actualizar minero', data: null })
+>>>>>>> eb9c49f1a36c2a6b9fa38a427414bc97fdf3015f
     }
   }
 
@@ -322,8 +377,9 @@ export default class AuthController {
     }
   }
 
-  async getMinero({ params, response }: HttpContext) {
+  async getMinero(ctx: HttpContext) {
     try {
+<<<<<<< HEAD
       const id = params.id
       const minero = await this.userRepository.findById(id)
       if (!minero || minero.role !== 'minero') {
@@ -341,6 +397,22 @@ export default class AuthController {
       return response
         .status(400)
         .json({ success: false, message: 'Error al obtener detalle de minero', data: null })
+=======
+      const id = (ctx as any).params.id
+      const user = (ctx as any).user
+      const minero = await this.userRepository.findById(id)
+      if (!minero || minero.role !== 'minero') {
+        return (ctx as any).response.status(404).json({ success: false, message: 'Minero no encontrado', data: null })
+      }
+      // Supervisores solo pueden ver mineros propios
+      if (user && user.role === 'supervisor' && minero.supervisorId !== user.id) {
+        return ResponseHelper.forbidden((ctx as any).response, 'No tienes acceso a esta sección')
+      }
+      return (ctx as any).response.json({ success: true, message: 'Detalle de minero obtenido exitosamente', data: minero })
+    } catch (error) {
+      ErrorHandler.logError(error, 'GET_MINERO_DETAIL')
+      return (ctx as any).response.status(400).json({ success: false, message: 'Error al obtener detalle de minero', data: null })
+>>>>>>> eb9c49f1a36c2a6b9fa38a427414bc97fdf3015f
     }
   }
 
