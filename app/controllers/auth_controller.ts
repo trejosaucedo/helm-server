@@ -82,27 +82,6 @@ export default class AuthController {
 
   // Actualiza datos básicos del perfil del usuario autenticado
   updateProfile = withUser(async (user, { request, response }) => {
-<<<<<<< HEAD
-    if (user.role === 'admin') {
-      return response.status(403).json({
-        success: false,
-        message: 'Los administradores no pueden editar su perfil',
-        data: null,
-      })
-    }
-    const payload = await request.validateUsing(updateProfileValidator)
-    const updated = await this.userRepository.update({ id: user.id, ...payload } as any)
-    if (!updated) {
-      return response
-        .status(404)
-        .json({ success: false, message: 'Usuario no encontrado', data: null })
-    }
-    return TokenUtils.successResponse(
-      response,
-      'Perfil actualizado exitosamente',
-      TokenUtils.formatUserData(updated)
-    )
-=======
     try {
       const body = await request.validateUsing(updateProfileValidator)
       const updated = await this.userRepository.update({ id: user.id, ...body } as any)
@@ -118,7 +97,6 @@ export default class AuthController {
       ErrorHandler.logError(error, 'AUTH_UPDATE_PROFILE')
       return ErrorHandler.handleError(error, response, 'Error al actualizar perfil', 400)
     }
->>>>>>> eb9c49f1a36c2a6b9fa38a427414bc97fdf3015f
   })
 
   changePassword = withUser(async (user, { request, response }) => {
@@ -173,11 +151,11 @@ export default class AuthController {
     try {
       // 1. Valida el body
       const { email } = await request.validateUsing(emailValidator)
-      console.log('Email recibido para código de acceso:', email)
+      console.log('Email recibido para código de acceso:', email);
 
       // 3. Llama al servicio pasando el usuario completo
       const result = await this.authService.createAccessCodeForSupervisor(email)
-      console.log('Código de acceso generado correctamente:', result)
+      console.log('Código de acceso generado correctamente:', result);
 
       return response.created({
         success: true,
@@ -185,40 +163,28 @@ export default class AuthController {
         data: result,
       })
     } catch (error) {
-      console.error('Error real al crear código de acceso:', error)
-      return ResponseHelper.error(response, error.message || 'Error al generar código de acceso')
+      console.error('Error real al crear código de acceso:', error);
+      return ResponseHelper.error(response, error.message || 'Error al generar código de acceso');
     }
   }
 
   async listSupervisors({ response }: HttpContext) {
     try {
       const supervisors = await this.userRepository.getUsersByRole('supervisor')
-      return response.json({
-        success: true,
-        message: 'Supervisores obtenidos exitosamente',
-        data: supervisors,
-      })
+      return response.json({ success: true, message: 'Supervisores obtenidos exitosamente', data: supervisors })
     } catch (error) {
       ErrorHandler.logError(error, 'LIST_SUPERVISORS')
-      return response
-        .status(500)
-        .json({ success: false, message: 'Error al obtener supervisores', data: null })
+      return response.status(500).json({ success: false, message: 'Error al obtener supervisores', data: null })
     }
   }
 
   async listMiners({ response }: HttpContext) {
     try {
       const miners = await this.userRepository.getUsersByRole('minero')
-      return response.json({
-        success: true,
-        message: 'Mineros obtenidos exitosamente',
-        data: miners,
-      })
+      return response.json({ success: true, message: 'Mineros obtenidos exitosamente', data: miners })
     } catch (error) {
       ErrorHandler.logError(error, 'LIST_MINERS')
-      return response
-        .status(500)
-        .json({ success: false, message: 'Error al obtener mineros', data: null })
+      return response.status(500).json({ success: false, message: 'Error al obtener mineros', data: null })
     }
   }
 
@@ -226,23 +192,10 @@ export default class AuthController {
     try {
       const user = (ctx as any).user
       const miners = await this.userRepository.getMinerosBySupervisor(user.id)
-<<<<<<< HEAD
-      return response.json({
-        success: true,
-        message: 'Mineros del supervisor obtenidos exitosamente',
-        data: miners,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'LIST_MINERS_BY_SUPERVISOR')
-      return response
-        .status(500)
-        .json({ success: false, message: 'Error al obtener mineros del supervisor', data: null })
-=======
       return ctx.response.json({ success: true, message: 'Mineros del supervisor obtenidos exitosamente', data: miners })
     } catch (error) {
       ErrorHandler.logError(error, 'LIST_MINERS_BY_SUPERVISOR')
       return ctx.response.status(500).json({ success: false, message: 'Error al obtener mineros del supervisor', data: null })
->>>>>>> eb9c49f1a36c2a6b9fa38a427414bc97fdf3015f
     }
   }
 
@@ -251,25 +204,10 @@ export default class AuthController {
       const user = (ctx as any).user
       const miners = await this.userRepository.getMinerosBySupervisor(user.id)
       const total = miners.length
-<<<<<<< HEAD
-      return response.json({
-        success: true,
-        message: 'Estadísticas de mineros del supervisor obtenidas exitosamente',
-        data: { total },
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'MINERS_STATS_BY_SUPERVISOR')
-      return response.status(500).json({
-        success: false,
-        message: 'Error al obtener estadísticas de mineros del supervisor',
-        data: null,
-      })
-=======
       return ctx.response.json({ success: true, message: 'Estadísticas de mineros del supervisor obtenidas exitosamente', data: { total } })
     } catch (error) {
       ErrorHandler.logError(error, 'MINERS_STATS_BY_SUPERVISOR')
       return ctx.response.status(500).json({ success: false, message: 'Error al obtener estadísticas de mineros del supervisor', data: null })
->>>>>>> eb9c49f1a36c2a6b9fa38a427414bc97fdf3015f
     }
   }
 
@@ -278,22 +216,12 @@ export default class AuthController {
       const email = decodeURIComponent(params.email)
       const code = await this.accessCodeRepository.getCodeByEmail(email)
       if (!code) {
-        return response.status(404).json({
-          success: false,
-          message: 'No se encontró un código de acceso para este email',
-          data: null,
-        })
+        return response.status(404).json({ success: false, message: 'No se encontró un código de acceso para este email', data: null })
       }
-      return response.json({
-        success: true,
-        message: 'Código de acceso obtenido exitosamente',
-        data: code,
-      })
+      return response.json({ success: true, message: 'Código de acceso obtenido exitosamente', data: code })
     } catch (error) {
       ErrorHandler.logError(error, 'GET_ACCESS_CODES_BY_EMAIL')
-      return response
-        .status(500)
-        .json({ success: false, message: 'Error al obtener código de acceso', data: null })
+      return response.status(500).json({ success: false, message: 'Error al obtener código de acceso', data: null })
     }
   }
 
@@ -301,16 +229,10 @@ export default class AuthController {
     try {
       const miners = await this.userRepository.getUsersByRole('minero')
       const total = miners.length
-      return response.json({
-        success: true,
-        message: 'Estadísticas de mineros obtenidas exitosamente',
-        data: { total },
-      })
+      return response.json({ success: true, message: 'Estadísticas de mineros obtenidas exitosamente', data: { total } })
     } catch (error) {
       ErrorHandler.logError(error, 'MINERS_STATS')
-      return response
-        .status(500)
-        .json({ success: false, message: 'Error al obtener estadísticas de mineros', data: null })
+      return response.status(500).json({ success: false, message: 'Error al obtener estadísticas de mineros', data: null })
     }
   }
 
@@ -332,29 +254,12 @@ export default class AuthController {
 
       const updated = await this.userRepository.updateMinero({ id, ...payload })
       if (!updated) {
-<<<<<<< HEAD
-        return response
-          .status(404)
-          .json({ success: false, message: 'Minero no encontrado', data: null })
-      }
-      return response.json({
-        success: true,
-        message: 'Minero actualizado exitosamente',
-        data: updated,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'UPDATE_MINERO')
-      return response
-        .status(400)
-        .json({ success: false, message: 'Error al actualizar minero', data: null })
-=======
         return res.status(404).json({ success: false, message: 'Minero no encontrado', data: null })
       }
       return res.json({ success: true, message: 'Minero actualizado exitosamente', data: updated })
     } catch (error) {
       ErrorHandler.logError(error, 'UPDATE_MINERO')
       return (ctx as any).response.status(400).json({ success: false, message: 'Error al actualizar minero', data: null })
->>>>>>> eb9c49f1a36c2a6b9fa38a427414bc97fdf3015f
     }
   }
 
@@ -363,41 +268,18 @@ export default class AuthController {
       const id = params.id
       const user = await this.userRepository.findById(id)
       if (!user) {
-        return response
-          .status(404)
-          .json({ success: false, message: 'Minero no encontrado', data: null })
+        return response.status(404).json({ success: false, message: 'Minero no encontrado', data: null })
       }
       await user.delete()
       return response.json({ success: true, message: 'Minero eliminado exitosamente' })
     } catch (error) {
       ErrorHandler.logError(error, 'DELETE_MINERO')
-      return response
-        .status(400)
-        .json({ success: false, message: 'Error al eliminar minero', data: null })
+      return response.status(400).json({ success: false, message: 'Error al eliminar minero', data: null })
     }
   }
 
   async getMinero(ctx: HttpContext) {
     try {
-<<<<<<< HEAD
-      const id = params.id
-      const minero = await this.userRepository.findById(id)
-      if (!minero || minero.role !== 'minero') {
-        return response
-          .status(404)
-          .json({ success: false, message: 'Minero no encontrado', data: null })
-      }
-      return response.json({
-        success: true,
-        message: 'Detalle de minero obtenido exitosamente',
-        data: minero,
-      })
-    } catch (error) {
-      ErrorHandler.logError(error, 'GET_MINERO_DETAIL')
-      return response
-        .status(400)
-        .json({ success: false, message: 'Error al obtener detalle de minero', data: null })
-=======
       const id = (ctx as any).params.id
       const user = (ctx as any).user
       const minero = await this.userRepository.findById(id)
@@ -412,25 +294,24 @@ export default class AuthController {
     } catch (error) {
       ErrorHandler.logError(error, 'GET_MINERO_DETAIL')
       return (ctx as any).response.status(400).json({ success: false, message: 'Error al obtener detalle de minero', data: null })
->>>>>>> eb9c49f1a36c2a6b9fa38a427414bc97fdf3015f
     }
   }
 
   async getAllAccessCodes({ response }: HttpContext) {
     try {
-      const codes = await this.accessCodeRepository.getAllCodes()
-      return response.json({
-        success: true,
-        message: 'Códigos de acceso obtenidos exitosamente',
-        data: codes,
-      })
+      const codes = await this.accessCodeRepository.getAllCodes();
+      return response.json({ 
+        success: true, 
+        message: 'Códigos de acceso obtenidos exitosamente', 
+        data: codes 
+      });
     } catch (error) {
-      ErrorHandler.logError(error, 'GET_ALL_ACCESS_CODES')
-      return response.status(500).json({
-        success: false,
-        message: 'Error al obtener códigos de acceso',
-        data: null,
-      })
+      ErrorHandler.logError(error, 'GET_ALL_ACCESS_CODES');
+      return response.status(500).json({ 
+        success: false, 
+        message: 'Error al obtener códigos de acceso', 
+        data: null 
+      });
     }
   }
 }
