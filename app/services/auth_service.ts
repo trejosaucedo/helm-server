@@ -13,6 +13,7 @@ import User from '#models/user'
 import { toUserResponseDto } from '#mappers/user.mapper'
 import { AccessCodeRepository } from '#repositories/acces_code_repository'
 import { randomBytes } from 'node:crypto'
+import { EmailService } from '#services/email_service'
 
 export class AuthService {
   private userRepository: UserRepository
@@ -177,7 +178,21 @@ export class AuthService {
       await this.cascoRepository.assignToMinero(casco.id, user.id)
     }
 
-    // 7. Retornar respuesta estructurada
+    // 7. Enviar email con contraseña temporal
+    try {
+      if (process.env.SENDGRID_API_KEY) {
+        EmailService.configure(process.env.SENDGRID_API_KEY)
+        await EmailService.sendTemporaryPasswordEmail(
+          data.email,
+          data.fullName,
+          temporaryPassword
+        )
+      }
+    } catch (err) {
+      console.error('Error enviando email de contraseña temporal:', err)
+    }
+
+    // 8. Retornar respuesta estructurada
     return {
       user: toUserResponseDto(user),
       temporaryPassword,
@@ -193,6 +208,14 @@ export class AuthService {
     await this.codeRepo.create(code, email)
 
     // 4. Retornar el código en objeto
+    try {
+      if (process.env.SENDGRID_API_KEY) {
+        EmailService.configure(process.env.SENDGRID_API_KEY)
+        await EmailService.sendAccessCodeEmail(email, code)
+      }
+    } catch (err) {
+      console.error('Error enviando email de código de acceso:', err)
+    }
     return { code }
   }
 

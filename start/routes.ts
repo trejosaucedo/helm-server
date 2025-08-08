@@ -13,6 +13,8 @@ router
     router.post('/logout', '#controllers/auth_controller.logout')
     router.post('/logout-all', '#controllers/auth_controller.logoutAll')
     router.get('/me', '#controllers/auth_controller.me')
+    router.get('/profile', '#controllers/auth_controller.getProfile')
+    router.put('/profile', '#controllers/auth_controller.updateProfile')
     router.put('/change-password', '#controllers/auth_controller.changePassword')
     router.post('/register-minero', '#controllers/auth_controller.registerMinero')
     router.get('/sessions', '#controllers/auth_controller.getSessions')

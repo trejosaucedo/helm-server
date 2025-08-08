@@ -6,6 +6,7 @@ import {
   changePasswordValidator,
   emailValidator,
   updateMineroValidator,
+  updateProfileValidator,
 } from '#validators/auth'
 import { AuthService } from '#services/auth_service'
 import { ErrorHandler } from '#utils/error_handler'
@@ -68,6 +69,24 @@ export default class AuthController {
       'Usuario obtenido exitosamente',
       TokenUtils.formatUserData(user)
     )
+  })
+
+  // Perfil actual del usuario autenticado
+  getProfile = withUser(async (user, { response }) => {
+    return TokenUtils.successResponse(response, 'Perfil obtenido exitosamente', TokenUtils.formatUserData(user))
+  })
+
+  // Actualizar perfil del usuario autenticado
+  updateProfile = withUser(async (user, { request, response }) => {
+    if (user.role === 'admin') {
+      return response.status(403).json({ success: false, message: 'Los administradores no pueden editar su perfil', data: null })
+    }
+    const payload = await request.validateUsing(updateProfileValidator)
+    const updated = await this.userRepository.update({ id: user.id, ...payload } as any)
+    if (!updated) {
+      return response.status(404).json({ success: false, message: 'Usuario no encontrado', data: null })
+    }
+    return TokenUtils.successResponse(response, 'Perfil actualizado exitosamente', TokenUtils.formatUserData(updated))
   })
 
   changePassword = withUser(async (user, { request, response }) => {

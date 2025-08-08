@@ -56,3 +56,15 @@ export const emailValidator = vine.compile(
     email: vine.string().email().normalizeEmail(),
   })
 )
+
+// Actualización de perfil (campos opcionales)
+export const updateProfileValidator = vine.compile(
+  vine.object({
+    fullName: vine.string().trim().optional(),
+    email: vine.string().email().normalizeEmail().optional(),
+    phone: vine.string().trim().optional().nullable(),
+    rfc: vine.string().trim().optional().nullable(),
+    address: vine.string().trim().optional().nullable(),
+    birthDate: vine.string().trim().optional().nullable(),
+  })
+)

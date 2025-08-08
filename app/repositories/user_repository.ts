@@ -41,6 +41,10 @@ export class UserRepository {
 
     user.fullName = data.fullName ?? user.fullName
     user.email = data.email ?? user.email
+    user.phone = (data as any).phone ?? user.phone
+    user.rfc = (data as any).rfc ?? user.rfc
+    user.address = (data as any).address ?? user.address
+    user.birthDate = (data as any).birthDate ?? user.birthDate
 
     await user.save()
     return user
