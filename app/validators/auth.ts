@@ -41,6 +41,10 @@ export const updateMineroValidator = vine.compile(
     fechaContratacion: vine.string().trim().optional().nullable(),
     especialidadEnMineria: vine.string().trim().optional().nullable(),
     genero: vine.enum(['masculino', 'femenino']).optional().nullable(),
+    phone: vine.string().trim().optional().nullable(),
+    rfc: vine.string().trim().optional().nullable(),
+    address: vine.string().trim().optional().nullable(),
+    birthDate: vine.string().trim().optional().nullable(),
   })
 )
 

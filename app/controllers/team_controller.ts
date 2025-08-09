@@ -1,6 +1,6 @@
 import { HttpContext } from '@adonisjs/core/http'
 import { TeamService } from '#services/team_service'
-import { createTeamValidator, assignMinerValidator } from '#validators/teams'
+import { createTeamValidator, assignMinerValidator, updateTeamValidator } from '#validators/teams'
 import { ErrorHandler } from '#utils/error_handler'
 
 // Helpers
@@ -127,7 +127,7 @@ export default class TeamController {
   async updateTeam(ctx: HttpContext) {
     try {
       const id = ctx.params.id;
-      const payload = ctx.request.body();
+      const payload = await ctx.request.validateUsing(updateTeamValidator)
       const updated = await this.teamService.updateTeam(id, payload);
       if (!updated) {
         return jsonError(ctx.response, 'Equipo no encontrado', 404);
