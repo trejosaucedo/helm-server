@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { CascoService } from '#services/casco_service'
+import { SensorService } from '#services/sensor_service'
 import {
   activateCascoValidator,
   assignCascoValidator,
@@ -43,9 +44,11 @@ function jsonError(
 
 export default class CascoController {
   private cascoService: CascoService
+  private sensorService: SensorService
 
   constructor() {
     this.cascoService = new CascoService()
+    this.sensorService = new SensorService()
   }
 
   // Renombrar el método para que coincida con la ruta
@@ -53,7 +56,9 @@ export default class CascoController {
     try {
       const user = ctx.user
       if (!user) {
-        return ctx.response.status(401).json({ success: false, message: 'No autenticado', data: null })
+        return ctx.response
+          .status(401)
+          .json({ success: false, message: 'No autenticado', data: null })
       }
       // Si es admin, puede ver todos los cascos; si es supervisor, solo los suyos
       let cascos
@@ -62,10 +67,16 @@ export default class CascoController {
       } else {
         cascos = await this.cascoService.getCascosBySupervisor(user.id)
       }
-      return ctx.response.json({ success: true, message: 'Cascos obtenidos exitosamente', data: cascos })
+      return ctx.response.json({
+        success: true,
+        message: 'Cascos obtenidos exitosamente',
+        data: cascos,
+      })
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_MY_HELMETS')
-      return ctx.response.status(500).json({ success: false, message: 'Error al obtener cascos', data: null })
+      return ctx.response
+        .status(500)
+        .json({ success: false, message: 'Error al obtener cascos', data: null })
     }
   }
 
@@ -154,6 +165,49 @@ export default class CascoController {
     }
   }
 
+  // Función helper para crear los sensores por defecto
+  private getDefaultSensors(cascoId: string) {
+    return [
+      {
+        cascoId,
+        type: 'gps' as const,
+        name: 'GPS Tracker',
+        unit: 'coords',
+        sampleRate: 5000, // 5 segundos
+      },
+      {
+        cascoId,
+        type: 'heart_rate' as const,
+        name: 'Monitor de Ritmo Cardíaco',
+        minValue: 60,
+        maxValue: 120,
+        unit: 'bpm',
+        sampleRate: 10000, // 10 segundos
+        alertThreshold: 130,
+      },
+      {
+        cascoId,
+        type: 'body_temperature' as const,
+        name: 'Sensor de Temperatura Corporal',
+        minValue: 35,
+        maxValue: 38,
+        unit: '°C',
+        sampleRate: 15000, // 15 segundos
+        alertThreshold: 38.5,
+      },
+      {
+        cascoId,
+        type: 'gas' as const,
+        name: 'Detector de Gas',
+        minValue: 0,
+        maxValue: 100,
+        unit: 'ppm',
+        sampleRate: 3000, // 3 segundos
+        alertThreshold: 50,
+      },
+    ]
+  }
+
   async create({ request, response, user }: HttpContext) {
     try {
       const payload = await request.validateUsing(createCascoValidator)
@@ -167,10 +221,26 @@ export default class CascoController {
         supervisorId: supervisorId,
       })
 
+      // Crear los 4 sensores por defecto
+      const defaultSensors = this.getDefaultSensors(newCasco.id)
+      const createdSensors = []
+
+      for (const sensorData of defaultSensors) {
+        try {
+          const sensor = await this.sensorService.createSensor(sensorData)
+          createdSensors.push(sensor)
+        } catch (sensorError) {
+          console.warn(`Error al crear sensor ${sensorData.type}:`, sensorError)
+        }
+      }
+
       return response.created({
         success: true,
-        message: 'Casco creado exitosamente',
-        data: newCasco,
+        message: 'Casco creado exitosamente con sensores',
+        data: {
+          casco: newCasco,
+          sensors: createdSensors,
+        },
       })
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_CREATE')
@@ -180,47 +250,67 @@ export default class CascoController {
 
   async getCasco({ params, response }: HttpContext) {
     try {
-      const id = params.id;
-      const casco = await this.cascoService.cascoRepository.findById(id);
+      const id = params.id
+      const casco = await this.cascoService.cascoRepository.findById(id)
       if (!casco) {
-        return response.status(404).json({ success: false, message: 'Casco no encontrado', data: null });
+        return response
+          .status(404)
+          .json({ success: false, message: 'Casco no encontrado', data: null })
       }
-      return response.json({ success: true, message: 'Detalle de casco obtenido exitosamente', data: casco });
+      return response.json({
+        success: true,
+        message: 'Detalle de casco obtenido exitosamente',
+        data: casco,
+      })
     } catch (error) {
-      ErrorHandler.logError(error, 'GET_CASCO_DETAIL');
-      return response.status(400).json({ success: false, message: 'Error al obtener detalle de casco', data: null });
+      ErrorHandler.logError(error, 'GET_CASCO_DETAIL')
+      return response
+        .status(400)
+        .json({ success: false, message: 'Error al obtener detalle de casco', data: null })
     }
   }
 
   async updateCasco({ params, request, response }: HttpContext) {
     try {
-      const id = params.id;
-      const payload = await request.validateUsing(updateCascoValidator);
-      const casco = await this.cascoService.cascoRepository.findById(id);
+      const id = params.id
+      const payload = await request.validateUsing(updateCascoValidator)
+      const casco = await this.cascoService.cascoRepository.findById(id)
       if (!casco) {
-        return response.status(404).json({ success: false, message: 'Casco no encontrado', data: null });
+        return response
+          .status(404)
+          .json({ success: false, message: 'Casco no encontrado', data: null })
       }
-      Object.assign(casco, payload);
-      await casco.save();
-      return response.json({ success: true, message: 'Casco actualizado exitosamente', data: casco });
+      Object.assign(casco, payload)
+      await casco.save()
+      return response.json({
+        success: true,
+        message: 'Casco actualizado exitosamente',
+        data: casco,
+      })
     } catch (error) {
-      ErrorHandler.logError(error, 'UPDATE_CASCO');
-      return response.status(400).json({ success: false, message: 'Error al actualizar casco', data: null });
+      ErrorHandler.logError(error, 'UPDATE_CASCO')
+      return response
+        .status(400)
+        .json({ success: false, message: 'Error al actualizar casco', data: null })
     }
   }
 
   async deleteCasco({ params, response }: HttpContext) {
     try {
-      const id = params.id;
-      const casco = await this.cascoService.cascoRepository.findById(id);
+      const id = params.id
+      const casco = await this.cascoService.cascoRepository.findById(id)
       if (!casco) {
-        return response.status(404).json({ success: false, message: 'Casco no encontrado', data: null });
+        return response
+          .status(404)
+          .json({ success: false, message: 'Casco no encontrado', data: null })
       }
-      await casco.delete();
-      return response.json({ success: true, message: 'Casco eliminado exitosamente' });
+      await casco.delete()
+      return response.json({ success: true, message: 'Casco eliminado exitosamente' })
     } catch (error) {
-      ErrorHandler.logError(error, 'DELETE_CASCO');
-      return response.status(400).json({ success: false, message: 'Error al eliminar casco', data: null });
+      ErrorHandler.logError(error, 'DELETE_CASCO')
+      return response
+        .status(400)
+        .json({ success: false, message: 'Error al eliminar casco', data: null })
     }
   }
 

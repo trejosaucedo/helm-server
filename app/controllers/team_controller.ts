@@ -72,7 +72,7 @@ export default class TeamController {
   }
 
   async assignMinerToTeam(ctx: HttpContext) {
-    return this.assignMiner(ctx);
+    return this.assignMiner(ctx)
   }
 
   async getTeamsBySupervisor(ctx: HttpContext) {
@@ -112,15 +112,15 @@ export default class TeamController {
 
   async getTeam(ctx: HttpContext) {
     try {
-      const id = ctx.params.id;
-      const team = await this.teamService.getTeamById(id);
+      const id = ctx.params.id
+      const team = await this.teamService.getTeamById(id)
       if (!team) {
-        return jsonError(ctx.response, 'Equipo no encontrado', 404);
+        return jsonError(ctx.response, 'Equipo no encontrado', 404)
       }
-      return jsonSuccess(ctx.response, 'Detalle de equipo obtenido exitosamente', team);
+      return jsonSuccess(ctx.response, 'Detalle de equipo obtenido exitosamente', team)
     } catch (error) {
-      ErrorHandler.logError(error, 'TEAM_DETAIL');
-      return jsonError(ctx.response, error.message || 'Error al obtener detalle de equipo', 400);
+      ErrorHandler.logError(error, 'TEAM_DETAIL')
+      return jsonError(ctx.response, error.message || 'Error al obtener detalle de equipo', 400)
     }
   }
 
@@ -130,26 +130,26 @@ export default class TeamController {
       const payload = await ctx.request.validateUsing(updateTeamValidator)
       const updated = await this.teamService.updateTeam(id, payload);
       if (!updated) {
-        return jsonError(ctx.response, 'Equipo no encontrado', 404);
+        return jsonError(ctx.response, 'Equipo no encontrado', 404)
       }
-      return jsonSuccess(ctx.response, 'Equipo actualizado exitosamente', updated);
+      return jsonSuccess(ctx.response, 'Equipo actualizado exitosamente', updated)
     } catch (error) {
-      ErrorHandler.logError(error, 'TEAM_UPDATE');
-      return jsonError(ctx.response, error.message || 'Error al actualizar equipo', 400);
+      ErrorHandler.logError(error, 'TEAM_UPDATE')
+      return jsonError(ctx.response, error.message || 'Error al actualizar equipo', 400)
     }
   }
 
   async deleteTeam(ctx: HttpContext) {
     try {
-      const id = ctx.params.id;
-      const deleted = await this.teamService.deleteTeam(id);
+      const id = ctx.params.id
+      const deleted = await this.teamService.deleteTeam(id)
       if (!deleted) {
-        return jsonError(ctx.response, 'Equipo no encontrado', 404);
+        return jsonError(ctx.response, 'Equipo no encontrado', 404)
       }
-      return jsonSuccess(ctx.response, 'Equipo eliminado exitosamente');
+      return jsonSuccess(ctx.response, 'Equipo eliminado exitosamente')
     } catch (error) {
-      ErrorHandler.logError(error, 'TEAM_DELETE');
-      return jsonError(ctx.response, error.message || 'Error al eliminar equipo', 400);
+      ErrorHandler.logError(error, 'TEAM_DELETE')
+      return jsonError(ctx.response, error.message || 'Error al eliminar equipo', 400)
     }
   }
 
