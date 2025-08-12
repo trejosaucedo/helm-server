@@ -36,7 +36,9 @@ export const updateSensorValidator = vine.compile(
  */
 export const createSensorReadingValidator = vine.compile(
   vine.object({
+    id: vine.string().optional(), // ID local del dispositivo
     sensorId: vine.string().uuid(),
+    sensorLocalId: vine.string().optional(), // ID local del sensor en el dispositivo
     cascoId: vine.string().uuid(),
     mineroId: vine.string().uuid(),
     value: vine.number(),

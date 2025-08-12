@@ -35,7 +35,9 @@ export interface SensorResponseDto {
 }
 
 export interface CreateSensorReadingDto {
+  id?: string // ID local del dispositivo
   sensorId: string
+  sensorLocalId?: string // ID local del sensor en el dispositivo
   cascoId: string
   mineroId: string
   value: number
@@ -49,7 +51,9 @@ export interface CreateSensorReadingDto {
 
 export interface SensorReadingResponseDto {
   id: string
+  localId?: string // ID local del dispositivo 
   sensorId: string
+  sensorLocalId?: string // ID local del sensor en el dispositivo
   cascoId: string
   mineroId: string
   value: number

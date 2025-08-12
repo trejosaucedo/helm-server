@@ -9,7 +9,9 @@ export type SensorReadingPayload = Omit<SensorReadingDocument, '_id' | 'received
 
 export interface SensorReadingDocument {
   _id?: string
+  localId?: string // ID local del dispositivo
   sensorId: string
+  sensorLocalId?: string // ID local del sensor en el dispositivo
   cascoId: string
   mineroId?: string
   value: number
