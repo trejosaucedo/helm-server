@@ -8,6 +8,8 @@ import {
   updateMineroValidator,
 } from '#validators/auth'
 import { AuthService } from '#services/auth_service'
+import { EmailService } from '#services/email_service'
+import { generateTempPassword } from '#utils/generate_password'
 import { updateProfileValidator } from '#validators/auth'
 import { ErrorHandler } from '#utils/error_handler'
 import { TokenUtils } from '#utils/token_utils'
@@ -244,6 +246,9 @@ export default class AuthController {
       const user = (ctx as any).user
       const id = params.id
       const payload = await req.validateUsing(updateMineroValidator)
+      // Detectar cambio de email para regenerar password temporal y reenviar
+      const current = await this.userRepository.findById(id)
+      const emailChanged = !!(current && payload.email && payload.email !== current.email)
       // Autorización: admin siempre; supervisor sólo si el minero le pertenece
       if (user && user.role === 'supervisor') {
         const target = await this.userRepository.findById(id)
@@ -255,6 +260,17 @@ export default class AuthController {
       const updated = await this.userRepository.updateMinero({ id, ...payload })
       if (!updated) {
         return res.status(404).json({ success: false, message: 'Minero no encontrado', data: null })
+      }
+
+      if (emailChanged) {
+        // Generar nueva contraseña temporal y enviarla al nuevo correo
+        const tempPassword = generateTempPassword(10)
+        await this.userRepository.updatePassword(updated.id, tempPassword)
+        try {
+          await EmailService.sendTemporaryPasswordEmail(String(updated.email || ''), String(updated.fullName || 'minero'), tempPassword)
+        } catch (e) {
+          ErrorHandler.logError(e, 'SEND_TEMP_PASSWORD_ON_EMAIL_CHANGE')
+        }
       }
       return res.json({ success: true, message: 'Minero actualizado exitosamente', data: updated })
     } catch (error) {

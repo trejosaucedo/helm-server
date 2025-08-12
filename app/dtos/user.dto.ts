@@ -38,6 +38,10 @@ export interface UpdateMineroDto {
   fechaContratacion?: string | null
   especialidadEnMineria?: string | null
   genero?: 'masculino' | 'femenino' | null
+  phone?: string | null
+  rfc?: string | null
+  address?: string | null
+  birthDate?: string | null
 }
 
 export interface UpdateSupervisorDto {

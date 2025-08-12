@@ -87,6 +87,15 @@ export class TeamService {
     return await this.teamRepository.findById(id);
   }
 
+  async updateTeam(id: string, data: Partial<{ nombre: string; zona: string; supervisorId: string }>) {
+    const updated = await this.teamRepository.update(id, data as any)
+    return updated
+  }
+
+  async deleteTeam(id: string): Promise<boolean> {
+    return await this.teamRepository.delete(id)
+  }
+
   private mapTeamToResponse(team: Team): TeamResponseDto {
     return {
       id: team.id,

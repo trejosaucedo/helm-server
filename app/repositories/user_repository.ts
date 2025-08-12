@@ -28,6 +28,13 @@ export class UserRepository {
     user.fullName = data.fullName ?? user.fullName
     user.email = data.email ?? user.email
     user.cascoId = data.cascoId ?? user.cascoId
+    ;(user as any).phone = (data as any).phone ?? (user as any).phone
+    ;(user as any).rfc = (data as any).rfc ?? (user as any).rfc
+    ;(user as any).address = (data as any).address ?? (user as any).address
+    ;(user as any).birthDate = (data as any).birthDate ?? (user as any).birthDate
+    ;(user as any).fechaContratacion = (data as any).fechaContratacion ?? (user as any).fechaContratacion
+    ;(user as any).especialidadEnMineria = (data as any).especialidadEnMineria ?? (user as any).especialidadEnMineria
+    ;(user as any).genero = (data as any).genero ?? (user as any).genero
 
     await user.save()
     return user
