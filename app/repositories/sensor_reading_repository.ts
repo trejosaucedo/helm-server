@@ -47,6 +47,7 @@ export class SensorReadingRepository {
     const mongoFilters: Record<string, unknown> = {}
     if (filters.cascoId) mongoFilters.cascoId = filters.cascoId
     if (filters.mineroId) mongoFilters.mineroId = filters.mineroId
+    if (filters.identificador) mongoFilters.identificador = filters.identificador
     if (filters.isAlert !== undefined) mongoFilters.alertsOnly = filters.isAlert
     if (filters.limit) mongoFilters.limit = filters.limit
 

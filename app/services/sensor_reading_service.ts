@@ -91,6 +91,7 @@ export class SensorReadingService {
         localId: data.id, // ID local del dispositivo
         sensorId: data.sensorId,
         sensorLocalId: data.sensorLocalId, // ID local del sensor
+        identificador: data.identificador, // Identificador del sensor (TMP, MQ7, MAX, GPS)
         cascoId: data.cascoId,
         mineroId: data.mineroId,
         value: data.value,
@@ -298,6 +299,7 @@ export class SensorReadingService {
       id: data.id, // ID local del dispositivo
       sensorId,
       sensorLocalId: data.sensorLocalId, // ID local del sensor
+      identificador: data.identificador, // Identificador del sensor (TMP, MQ7, MAX, GPS)
       cascoId,
       mineroId: data.mineroId,
       value: data.value,
