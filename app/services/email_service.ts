@@ -1,11 +1,11 @@
-import sgMail from '@sendgrid/mail' // Comentado temporalmente para testing
+import sgMail from '@sendgrid/mail'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 export class EmailService {
   static configure(apiKey: string) {
-    sgMail.setApiKey(apiKey) // Comentado temporalmente
-    console.log('📧 Email service configurado (modo testing - no real email)')
+    sgMail.setApiKey(apiKey)
+    console.log('📧 Email service configurado')
   }
 
   static getBrandLogoBase64(): string | null {
@@ -117,14 +117,14 @@ export class EmailService {
 
   static async sendTemporaryPasswordEmail(toEmail: string, fullName: string, tempPassword: string) {
     const html = this.buildTemporaryPasswordHtml(fullName, toEmail, tempPassword)
-    const msg = {
+     const msg = {
       to: toEmail,
       from: process.env.SENDGRID_FROM || 'no-reply@helm.local',
       subject: 'HELM - Tu contraseña temporal',
       html,
     }
-     await sgMail.send(msg) // Comentado temporalmente
-    console.log('📧 Email simulado enviado a:', toEmail, 'con subject:', msg.subject)
+     await sgMail.send(msg)
+    console.log('📧 Email enviado a:', toEmail, 'con subject:', msg.subject)
   }
 
   static async sendAccessCodeEmail(toEmail: string, code: string) {
@@ -135,8 +135,8 @@ export class EmailService {
       subject: 'HELM - Tu código de acceso',
       html,
     }
-    await sgMail.send(msg) // Comentado temporalmente
-    console.log('📧 Email simulado enviado a:', toEmail, 'con subject:', msg.subject)
+    await sgMail.send(msg)
+    console.log('📧 Email enviado a:', toEmail, 'con subject:', msg.subject)
   }
 }
 
