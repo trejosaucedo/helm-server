@@ -102,6 +102,12 @@ router
   })
   .prefix('/sensors')
 
+// --- Dispositivos IoT: lectura batch desde Raspberry (DEBE IR ANTES que la ruta con :sensorId) ---
+router.post(
+  '/cascos/:cascoId/sensores/batch',
+  '#controllers/sensor_reading_controller.publishBatchSensorData'
+)
+
 // --- Dispositivos IoT: lectura directa desde Raspberry ---
 router.post(
   '/cascos/:cascoId/sensores/:sensorId',
