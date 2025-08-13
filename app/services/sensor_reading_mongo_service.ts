@@ -9,7 +9,10 @@ export type SensorReadingPayload = Omit<SensorReadingDocument, '_id' | 'received
 
 export interface SensorReadingDocument {
   _id?: string
+  localId?: string // ID local del dispositivo
   sensorId: string
+  sensorLocalId?: string // ID local del sensor en el dispositivo
+  identificador?: string // Identificador del sensor (TMP, MQ7, MAX, GPS)
   cascoId: string
   mineroId?: string
   value: number
@@ -94,6 +97,7 @@ export class SensorReadingMongoService {
       sensorId?: string
       cascoId?: string
       mineroId?: string
+      identificador?: string // Filtro por identificador (TMP, MQ7, MAX, GPS)
       limit?: number
       alertsOnly?: boolean
     }
@@ -108,6 +112,7 @@ export class SensorReadingMongoService {
     if (options?.sensorId) filter.sensorId = options.sensorId
     if (options?.cascoId) filter.cascoId = options.cascoId
     if (options?.mineroId) filter.mineroId = options.mineroId
+    if (options?.identificador) filter.identificador = options.identificador
     if (options?.alertsOnly) filter.isAlert = true
 
     const cursor = this.collection

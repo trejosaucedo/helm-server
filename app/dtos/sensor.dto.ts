@@ -35,7 +35,10 @@ export interface SensorResponseDto {
 }
 
 export interface CreateSensorReadingDto {
+  id?: string // ID local del dispositivo
   sensorId: string
+  sensorLocalId?: string // ID local del sensor en el dispositivo
+  identificador?: string // Identificador del sensor (TMP, MQ7, MAX, GPS)
   cascoId: string
   mineroId: string
   value: number
@@ -49,7 +52,10 @@ export interface CreateSensorReadingDto {
 
 export interface SensorReadingResponseDto {
   id: string
+  localId?: string // ID local del dispositivo 
   sensorId: string
+  sensorLocalId?: string // ID local del sensor en el dispositivo
+  identificador?: string // Identificador del sensor (TMP, MQ7, MAX, GPS)
   cascoId: string
   mineroId: string
   value: number
@@ -70,6 +76,7 @@ export interface SensorReadingFiltersDto {
   cascoId?: string
   mineroId?: string
   sensorType?: 'gps' | 'heart_rate' | 'body_temperature' | 'gas'
+  identificador?: string // Filtro por identificador (TMP, MQ7, MAX, GPS)
   startDate?: string
   endDate?: string
   isAlert?: boolean

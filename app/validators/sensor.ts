@@ -36,7 +36,10 @@ export const updateSensorValidator = vine.compile(
  */
 export const createSensorReadingValidator = vine.compile(
   vine.object({
+    id: vine.string().optional(), // ID local del dispositivo
     sensorId: vine.string().uuid(),
+    sensorLocalId: vine.string().optional(), // ID local del sensor en el dispositivo
+    identificador: vine.string().optional(), // Identificador del sensor (TMP, MQ7, MAX, GPS)
     cascoId: vine.string().uuid(),
     mineroId: vine.string().uuid(),
     value: vine.number(),
@@ -57,6 +60,7 @@ export const sensorReadingFiltersValidator = vine.compile(
     cascoId: vine.string().uuid().optional(),
     mineroId: vine.string().uuid().optional(),
     sensorType: vine.enum(['gps', 'heart_rate', 'body_temperature', 'gas']).optional(),
+    identificador: vine.string().optional(), // Filtro por identificador (TMP, MQ7, MAX, GPS)
     startDate: vine.string().optional(),
     endDate: vine.string().optional(),
     isAlert: vine.boolean().optional(),
