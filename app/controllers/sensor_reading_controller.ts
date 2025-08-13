@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { SensorReadingService } from '#services/sensor_reading_service'
 import { SensorService } from '#services/sensor_service'
+import { sensorReadingCreatedAtFiltersValidator } from '#validators/sensor'
 import {
   createSensorReadingValidator,
   batchSensorDataValidator,
@@ -94,6 +95,34 @@ export default class SensorReadingController {
     } catch (error) {
       ErrorHandler.logError(error, 'SENSOR_GET_STATS')
       return ErrorHandler.handleError(error, response, 'Error al obtener estadísticas', 400)
+    }
+  }
+
+  // GET /sensors/readings/by-created
+  async getReadingsByCreatedAt({ request, response }: HttpContext) {
+    try {
+      const { field, identifier, startDate, endDate, limit } =
+        await request.validateUsing(sensorReadingCreatedAtFiltersValidator)
+      const readings = await this.readingService.getReadingsByCreatedAt(
+        field as 'sensorId' | 'cascoId' | 'mineroId',
+        identifier,
+        startDate,
+        endDate,
+        limit
+      )
+      return response.json({
+        success: true,
+        message: 'Lecturas obtenidas exitosamente',
+        data: readings,
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'SENSOR_GET_BY_CREATED_AT')
+      return ErrorHandler.handleError(
+        error,
+        response,
+        'Error al obtener lecturas por createdAt',
+        400
+      )
     }
   }
 

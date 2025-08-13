@@ -66,6 +66,19 @@ export const sensorReadingFiltersValidator = vine.compile(
 )
 
 /**
+ * Validator para filtros por createdAt y campo de identificador
+ */
+export const sensorReadingCreatedAtFiltersValidator = vine.compile(
+  vine.object({
+    field: vine.enum(['sensorId', 'cascoId', 'mineroId']),
+    identifier: vine.string(),
+    startDate: vine.string().optional(),
+    endDate: vine.string().optional(),
+    limit: vine.number().withoutDecimals().min(1).max(5000).optional(),
+  })
+)
+
+/**
  * Validator para parámetros de ID
  */
 export const sensorIdValidator = vine.compile(

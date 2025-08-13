@@ -37,7 +37,7 @@ router
 
 router
   .post('/cascos', '#controllers/casco_controller.create')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('admin'))
 router.delete('/cascos/clean', '#controllers/casco_controller.cleanCascos')
 router
   .get('/cascos/:id', '#controllers/casco_controller.getCasco')
@@ -89,6 +89,9 @@ router
       .use(middleware.auth())
     router
       .get('/:sensorId/stats', '#controllers/sensor_reading_controller.getSensorStats')
+      .use(middleware.auth())
+    router
+      .get('/readings/by-created', '#controllers/sensor_reading_controller.getReadingsByCreatedAt')
       .use(middleware.auth())
     router
       .get(

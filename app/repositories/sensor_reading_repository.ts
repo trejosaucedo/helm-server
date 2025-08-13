@@ -57,6 +57,19 @@ export class SensorReadingRepository {
     return this.mongoService.getReadingsByDateRange(startDate, endDate, mongoFilters)
   }
 
+  async findByCreatedAt(
+    field: 'sensorId' | 'cascoId' | 'mineroId',
+    identifier: string,
+    start: Date,
+    end: Date,
+    limit?: number,
+    alertsOnly?: boolean
+  ): Promise<SensorReadingDocument[]> {
+    const options: any = { limit, alertsOnly }
+    options[field] = identifier
+    return this.mongoService.getReadingsByCreatedAtRange(start, end, options)
+  }
+
   async getRecentReadings(mineroId: string, minutes = 30): Promise<SensorReadingDocument[]> {
     const since = new Date(Date.now() - minutes * 60 * 1000)
     const now = new Date()

@@ -243,6 +243,36 @@ export class SensorReadingService {
     }
   }
 
+  async getReadingsByCreatedAt(
+    field: 'sensorId' | 'cascoId' | 'mineroId',
+    identifier: string,
+    startDate?: string,
+    endDate?: string,
+    limit?: number
+  ): Promise<any[]> {
+    const trace = makeTraceId()
+    console.time(`[${trace}] getReadingsByCreatedAt`)
+    await this.connect()
+    try {
+      log(trace, `▶️ getReadingsByCreatedAt field:${field} identifier:${identifier} limit:${limit}`)
+      const start = startDate ? new Date(startDate) : new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const end = endDate ? new Date(endDate) : new Date()
+      const docs = await this.readingRepository.findByCreatedAt(field, identifier, start, end, limit)
+      const mapped = docs.map((d: any) => ({
+        ...d,
+        createdAtUtc: d.createdAt ? new Date(d.createdAt).toISOString() : null,
+        createdAtLocal: d.createdAt ? new Date(d.createdAt).toLocaleString() : null,
+        timestampUtc: d.timestamp ? new Date(d.timestamp).toISOString() : null,
+        timestampLocal: d.timestamp ? new Date(d.timestamp).toLocaleString() : null,
+      }))
+      log(trace, '📤 getReadingsByCreatedAt devuelve:', mapped.length)
+      return mapped
+    } finally {
+      await this.disconnect()
+      console.timeEnd(`[${trace}] getReadingsByCreatedAt`)
+    }
+  }
+
   private isReadingNormal(value: number, sensor: any): boolean {
     if (sensor.type === 'gps') return true
     if (sensor.minValue !== null && value < sensor.minValue) return false

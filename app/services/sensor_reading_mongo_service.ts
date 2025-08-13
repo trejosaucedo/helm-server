@@ -119,6 +119,40 @@ export class SensorReadingMongoService {
   }
 
   /**
+   * Obtener lecturas por rango de createdAt
+   */
+  async getReadingsByCreatedAtRange(
+    startDate: Date,
+    endDate: Date,
+    options?: {
+      sensorId?: string
+      cascoId?: string
+      mineroId?: string
+      limit?: number
+      alertsOnly?: boolean
+    }
+  ): Promise<SensorReadingDocument[]> {
+    const filter: any = {
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    }
+
+    if (options?.sensorId) filter.sensorId = options.sensorId
+    if (options?.cascoId) filter.cascoId = options.cascoId
+    if (options?.mineroId) filter.mineroId = options.mineroId
+    if (options?.alertsOnly) filter.isAlert = true
+
+    const cursor = this.collection
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .limit(options?.limit || 1000)
+
+    return await cursor.toArray()
+  }
+
+  /**
    * Obtener las últimas lecturas de un sensor
    */
   async getLatestReadings(sensorId: string, limit: number = 10): Promise<SensorReadingDocument[]> {
