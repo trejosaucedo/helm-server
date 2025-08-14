@@ -86,8 +86,15 @@ export default class CascoController {
       if (!user) return
 
       const payload = await ctx.request.validateUsing(activateCascoValidator)
+      
+      // Verificar si el casco ya está asignado al usuario para determinar el mensaje
+      const existingCasco = await this.cascoService.findByPhysicalId(payload.physicalId)
+      const isReactivation = existingCasco && existingCasco.supervisorId === user.id
+      
       const result = await this.cascoService.activateCascoByPhysicalId(user.id, payload.physicalId)
-      return jsonSuccess(ctx.response, 'Casco activado exitosamente', result, 201)
+      const message = isReactivation ? 'Casco reactivado exitosamente' : 'Casco activado exitosamente'
+      
+      return jsonSuccess(ctx.response, message, result, 201)
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_ACTIVATE')
       return jsonError(ctx.response, error.message || 'Error al activar casco', 400)
