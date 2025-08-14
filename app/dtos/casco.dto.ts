@@ -1,7 +1,7 @@
 export interface CreateCascoDto {
-  serial: string
   physicalId: string
-  supervisorId?: string
+  serial?: string
+  supervisorId?: string | null
 }
 
 export interface ActivateCascoDto {
