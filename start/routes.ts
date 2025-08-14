@@ -121,6 +121,9 @@ router
       .post('/:teamId/assign-miner', '#controllers/team_controller.assignMinerToTeam')
       .use(middleware.auth(['admin', 'supervisor']))
     router
+      .delete('/:teamId/miners/:mineroId', '#controllers/team_controller.removeMinerFromTeam')
+      .use(middleware.auth(['admin', 'supervisor']))
+    router
       .get('/supervisor', '#controllers/team_controller.getTeamsBySupervisor')
       .use(middleware.auth('supervisor'))
   })
@@ -142,6 +145,10 @@ router
   .get('/supervisors', '#controllers/auth_controller.listSupervisors')
   .use(middleware.auth('admin'))
 
+router
+  .delete('/supervisors/:id', '#controllers/auth_controller.deleteSupervisor')
+  .use(middleware.auth('admin'))
+
 // --- Mineros ---
 router.get('/mineros', '#controllers/auth_controller.listMiners').use(middleware.auth('admin'))
 router
@@ -155,6 +162,9 @@ router
   .use(middleware.auth('admin'))
 router
   .get('/access-codes/:email', '#controllers/auth_controller.getAccessCodesByEmail')
+  .use(middleware.auth('admin'))
+router
+  .delete('/access-codes/:code', '#controllers/auth_controller.deleteAccessCode')
   .use(middleware.auth('admin'))
 router
   .post('/mineros', '#controllers/auth_controller.registerMinero')

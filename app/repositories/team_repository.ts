@@ -16,7 +16,11 @@ export class TeamRepository {
   }
 
   async findTeamsBySupervisorId(supervisorId: string) {
-    return Team.query().where('supervisorId', supervisorId).preload('mineros')
+    return Team.query()
+      .where('supervisorId', supervisorId)
+      .preload('mineros', (query) => {
+        query.preload('minero')
+      })
   }
 
   async findByTeamId(teamId: string) {
@@ -24,7 +28,9 @@ export class TeamRepository {
   }
 
   async getAllTeams() {
-    return await Team.query().preload('mineros')
+    return await Team.query().preload('mineros', (query) => {
+      query.preload('minero')
+    })
   }
 
   async update(id: string, data: { nombre?: string; zona?: string; supervisorId?: string }) {
@@ -41,7 +47,7 @@ export class TeamRepository {
     const team = await Team.find(id)
     if (!team) return false
     // Eliminar relaciones de mineros si existen
-    await TeamMiner.query().where('equipoId', id).delete()
+    await TeamMiner.query().where('equipo_id', id).delete()
     await team.delete()
     return true
   }

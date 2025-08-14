@@ -153,10 +153,17 @@ export default class AuthController {
     try {
       // 1. Valida el body
       const { email } = await request.validateUsing(emailValidator)
-      console.log('Email recibido para código de acceso:', email);
+      const normalizedEmail = String(email).trim().toLowerCase()
+      console.log('Email recibido para código de acceso:', normalizedEmail);
+
+      // 2. Verificar que no exista ya un usuario con ese correo (en cualquier rol)
+      const exists = await this.userRepository.emailExists(normalizedEmail)
+      if (exists) {
+        return ResponseHelper.error(response, 'El email ya está registrado', 409)
+      }
 
       // 3. Llama al servicio pasando el usuario completo
-      const result = await this.authService.createAccessCodeForSupervisor(email)
+      const result = await this.authService.createAccessCodeForSupervisor(normalizedEmail)
       console.log('Código de acceso generado correctamente:', result);
 
       return response.created({
@@ -177,6 +184,21 @@ export default class AuthController {
     } catch (error) {
       ErrorHandler.logError(error, 'LIST_SUPERVISORS')
       return response.status(500).json({ success: false, message: 'Error al obtener supervisores', data: null })
+    }
+  }
+
+  async deleteSupervisor({ params, response }: HttpContext) {
+    try {
+      const id = params.id
+      const user = await this.userRepository.findById(id)
+      if (!user || user.role !== 'supervisor') {
+        return response.status(404).json({ success: false, message: 'Supervisor no encontrado', data: null })
+      }
+      await user.delete()
+      return response.json({ success: true, message: 'Supervisor eliminado exitosamente' })
+    } catch (error) {
+      ErrorHandler.logError(error, 'DELETE_SUPERVISOR')
+      return response.status(400).json({ success: false, message: 'Error al eliminar supervisor', data: null })
     }
   }
 
@@ -328,6 +350,20 @@ export default class AuthController {
         message: 'Error al obtener códigos de acceso', 
         data: null 
       });
+    }
+  }
+
+  async deleteAccessCode({ params, response }: HttpContext) {
+    try {
+      const code = decodeURIComponent(params.code)
+      const deleted = await this.accessCodeRepository.deleteUnusedByCode(code)
+      if (!deleted) {
+        return response.status(404).json({ success: false, message: 'Código no encontrado o ya usado', data: null })
+      }
+      return response.json({ success: true, message: 'Código eliminado exitosamente' })
+    } catch (error) {
+      ErrorHandler.logError(error, 'DELETE_ACCESS_CODE')
+      return response.status(400).json({ success: false, message: 'Error al eliminar código', data: null })
     }
   }
 }

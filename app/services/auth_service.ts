@@ -32,19 +32,20 @@ export class AuthService {
     sessionId: string
   }> {
     // 1. Validar que el email no exista
-    const emailExists = await this.userRepository.emailExists(data.email)
+    const normalizedEmail = (data.email || '').trim().toLowerCase()
+    const emailExists = await this.userRepository.emailExists(normalizedEmail)
     if (emailExists) {
       throw new Error('El email ya está registrado')
     }
 
     // 2. Validar código de acceso (AccessCode)
-    const code = await this.codeRepo.findValidCode(data.codigo, data.email)
+    const code = await this.codeRepo.findValidCode(data.codigo, normalizedEmail)
     if (!code) {
       throw new Error('Código de acceso inválido o ya usado')
     }
 
     // 3. Crear usuario
-    const user = await this.userRepository.createSupervisor(data)
+    const user = await this.userRepository.createSupervisor({ ...data, email: normalizedEmail })
     // 4. Marcar el código como usado
     await this.codeRepo.markCodeAsUsed(code.id)
 
@@ -207,14 +208,17 @@ export class AuthService {
     // 3. Guardar el código en la base de datos
     await this.codeRepo.create(code, email)
 
-    // 4. Retornar el código en objeto
-    try {
-      if (process.env.SENDGRID_API_KEY) {
+    // 4. Enviar email si hay API Key; si falla, elevar error para que el cliente lo vea
+    if (process.env.SENDGRID_API_KEY) {
+      try {
         EmailService.configure(process.env.SENDGRID_API_KEY)
         await EmailService.sendAccessCodeEmail(email, code)
+      } catch (err: any) {
+        console.error('Error enviando email de código de acceso:', err)
+        throw new Error('No se pudo enviar el correo con el código de acceso. Revisa configuración de correo.')
       }
-    } catch (err) {
-      console.error('Error enviando email de código de acceso:', err)
+    } else {
+      console.warn('SENDGRID_API_KEY no definido; no se envió correo. Código generado:', code)
     }
     return { code }
   }

@@ -135,8 +135,13 @@ export class EmailService {
       subject: 'HELM - Tu código de acceso',
       html,
     }
-    await sgMail.send(msg)
-    console.log('📧 Email enviado a:', toEmail, 'con subject:', msg.subject)
+    try {
+      await sgMail.send(msg)
+      console.log('📧 Email enviado a:', toEmail, 'con subject:', msg.subject)
+    } catch (e: any) {
+      console.error('SendGrid error:', e?.response?.body || e)
+      throw e
+    }
   }
 }
 

@@ -3,9 +3,10 @@ import { DateTime } from 'luxon'
 
 export class AccessCodeRepository {
   async findValidCode(codigo: string, correoSupervisor: string) {
+    const normalized = (correoSupervisor || '').trim().toLowerCase()
     return AccessCode.query()
       .where('codigo', codigo)
-      .andWhere('correo_supervisor', correoSupervisor)
+      .andWhereRaw('LOWER(correo_supervisor) = ?', [normalized])
       .andWhere('usado', false)
       .first()
   }
@@ -23,7 +24,7 @@ export class AccessCodeRepository {
     console.log('AccessCodeRepository: Creando código:', codigo, 'para email:', correoSupervisor)
     const result = await AccessCode.create({
       codigo,
-      correo_supervisor: correoSupervisor,
+      correo_supervisor: (correoSupervisor || '').trim().toLowerCase(),
       usado: false,
       fecha_generacion: DateTime.now(),
     })
@@ -32,14 +33,23 @@ export class AccessCodeRepository {
   }
 
   async getCodesByEmail(email: string) {
-    return await AccessCode.query().where('correo_supervisor', email)
+    const normalized = (email || '').trim().toLowerCase()
+    return await AccessCode.query().whereRaw('LOWER(correo_supervisor) = ?', [normalized])
   }
 
   async getCodeByEmail(email: string) {
-    return await AccessCode.query().where('correo_supervisor', email).orderBy('fecha_generacion', 'desc').first()
+    const normalized = (email || '').trim().toLowerCase()
+    return await AccessCode.query().whereRaw('LOWER(correo_supervisor) = ?', [normalized]).orderBy('fecha_generacion', 'desc').first()
   }
 
   async getAllCodes() {
     return await AccessCode.query().orderBy('fecha_generacion', 'desc')
+  }
+
+  async deleteUnusedByCode(code: string): Promise<number> {
+    // Elimina solo si no ha sido usado
+    const result = await AccessCode.query().where('codigo', code).andWhere('usado', false).delete()
+    // Lucid .delete() devuelve número de filas afectadas
+    return Number(result as unknown as number)
   }
 }

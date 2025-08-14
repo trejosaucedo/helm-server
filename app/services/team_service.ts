@@ -44,11 +44,19 @@ export class TeamService {
       throw new Error('El equipo no encontrado')
     }
 
-    await TeamMiner.create({
-      equipoId: teamId,
-      mineroId,
-      activo: true,
-    })
+    // Evitar duplicados lógicos
+    const exists = await TeamMiner.query()
+      .where('equipo_id', teamId)
+      .andWhere('minero_id', mineroId)
+      .first()
+
+    if (!exists) {
+      await TeamMiner.create({
+        equipoId: teamId,
+        mineroId,
+        activo: true,
+      })
+    }
 
     return this.mapTeamToResponse(team)
   }
@@ -75,7 +83,7 @@ export class TeamService {
     return team.mineros
       .filter((minero) => minero.activo)
       .map((minero) => ({
-        id: minero.id,
+        id: String(minero.id),
         nombre: minero.minero.fullName ?? 'Sin nombre',
         zona: team.zona,
         fechaAsignacion: minero.fechaAsignacion?.toISO() || '',
@@ -94,6 +102,16 @@ export class TeamService {
 
   async deleteTeam(id: string): Promise<boolean> {
     return await this.teamRepository.delete(id)
+  }
+
+  async removeMinerFromTeam(teamId: string, mineroId: string): Promise<boolean> {
+    const row = await TeamMiner.query()
+      .where('equipo_id', teamId)
+      .andWhere('minero_id', mineroId)
+      .first()
+    if (!row) return false
+    await row.delete()
+    return true
   }
 
   private mapTeamToResponse(team: Team): TeamResponseDto {

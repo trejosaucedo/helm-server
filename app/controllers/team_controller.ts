@@ -124,6 +124,21 @@ export default class TeamController {
     }
   }
 
+  async removeMinerFromTeam(ctx: HttpContext) {
+    try {
+      const user = requireUser(ctx)
+      if (!user) return
+      const teamId = ctx.params.teamId
+      const mineroId = ctx.params.mineroId
+      const ok = await this.teamService.removeMinerFromTeam(teamId, mineroId)
+      if (!ok) return jsonError(ctx.response, 'Relación no encontrada', 404)
+      return jsonSuccess(ctx.response, 'Minero desasignado del equipo')
+    } catch (error) {
+      ErrorHandler.logError(error, 'TEAM_REMOVE_MINER')
+      return jsonError(ctx.response, error.message || 'Error al desasignar minero del equipo', 400)
+    }
+  }
+
   async updateTeam(ctx: HttpContext) {
     try {
       const id = ctx.params.id;
