@@ -8,6 +8,8 @@ import {
   sensorReadingFiltersValidator,
 } from '#validators/sensor'
 import { ErrorHandler } from '#utils/error_handler'
+import mongoose from 'mongoose'
+import env from '#start/env'
 
 export default class SensorReadingController {
   private readingService: SensorReadingService
@@ -101,8 +103,9 @@ export default class SensorReadingController {
   // GET /sensors/readings/by-created
   async getReadingsByCreatedAt({ request, response }: HttpContext) {
     try {
-      const { field, identifier, startDate, endDate, limit } =
-        await request.validateUsing(sensorReadingCreatedAtFiltersValidator)
+      const { field, identifier, startDate, endDate, limit } = await request.validateUsing(
+        sensorReadingCreatedAtFiltersValidator
+      )
       const readings = await this.readingService.getReadingsByCreatedAt(
         field as 'sensorId' | 'cascoId' | 'mineroId',
         identifier,
@@ -230,17 +233,18 @@ export default class SensorReadingController {
       const errors = []
 
       // Procesar cada lectura en el batch
-      for (let i = 0; i < batchData.length; i++) {
-        const sensorData = batchData[i]
-        
+      for (const [i, sensorData] of batchData.entries()) {
         try {
           // Validar que el sensor existe en ese casco específico
-          const sensorValidation = await sensorService.validateSensorInCasco(sensorData.sensorId, cascoId)
+          const sensorValidation = await sensorService.validateSensorInCasco(
+            sensorData.sensorId,
+            cascoId
+          )
           if (!sensorValidation.isValid) {
             errors.push({
               index: i,
               sensorId: sensorData.sensorId,
-              error: sensorValidation.message
+              error: sensorValidation.message,
             })
             continue
           }
@@ -256,14 +260,13 @@ export default class SensorReadingController {
           results.push({
             index: i,
             sensorId: sensorData.sensorId,
-            status: 'success'
+            status: 'success',
           })
-
         } catch (error) {
           errors.push({
             index: i,
             sensorId: sensorData.sensorId,
-            error: error.message
+            error: error.message,
           })
         }
       }
@@ -275,12 +278,127 @@ export default class SensorReadingController {
           processed: results.length,
           errors: errors.length,
           results: results,
-          errorDetails: errors
-        }
+          errorDetails: errors,
+        },
       })
     } catch (error) {
       ErrorHandler.logError(error, 'SENSOR_PUBLISH_BATCH_DATA')
       return ErrorHandler.handleError(error, response, 'Error al procesar batch de sensores', 400)
+    }
+  }
+  public async timeseriesThree({ request, response }: HttpContext) {
+    try {
+      const COLLECTION = env.get('MONGO_COLLECTION', 'mediciones')
+      const col = mongoose.connection.db.collection(COLLECTION)
+
+      // --- Parámetros ---
+      const qs = request.qs()
+      const bucket = (qs.bucket || 'hour') as 'minute' | 'hour' | 'day'
+      const agg = (qs.agg || 'avg') as 'avg' | 'min' | 'max' | 'sum' | 'count'
+      const tz = (qs.tz || 'America/Monterrey') as string
+
+      const end = qs.end ? new Date(qs.end) : new Date()
+      const start = qs.start ? new Date(qs.start) : new Date(end.getTime() - 24 * 60 * 60 * 1000)
+
+      // --- Filtros ---
+      const match: any = { timestamp: { $gte: start, $lte: end } }
+      if (qs.sensorId) match.sensorId = qs.sensorId
+      if (qs.cascoId) match.cascoId = qs.cascoId
+      if (qs.mineroId) match.mineroId = qs.mineroId
+
+      // --- Normalización numérica segura (evita errores por tipos) ---
+      const addNumeric = {
+        $addFields: {
+          t: { $dateTrunc: { date: '$timestamp', unit: bucket, timezone: tz } },
+          m_mq7: {
+            $cond: [{ $isNumber: '$metadata.mq7' }, { $toDouble: '$metadata.mq7' }, null],
+          },
+          m_temp: {
+            $cond: [{ $isNumber: '$metadata.tempC' }, { $toDouble: '$metadata.tempC' }, null],
+          },
+          m_bpm: {
+            $cond: [{ $isNumber: '$metadata.bpm' }, { $toDouble: '$metadata.bpm' }, null],
+          },
+        },
+      }
+
+      // --- Operaciones de agregación por campo ---
+      const mq7Agg =
+        agg === 'avg'
+          ? { $avg: '$m_mq7' }
+          : agg === 'min'
+            ? { $min: '$m_mq7' }
+            : agg === 'max'
+              ? { $max: '$m_mq7' }
+              : agg === 'sum'
+                ? { $sum: '$m_mq7' }
+                : { $sum: { $cond: [{ $ne: ['$m_mq7', null] }, 1, 0] } } // count no-nulos
+
+      const tempAgg =
+        agg === 'avg'
+          ? { $avg: '$m_temp' }
+          : agg === 'min'
+            ? { $min: '$m_temp' }
+            : agg === 'max'
+              ? { $max: '$m_temp' }
+              : agg === 'sum'
+                ? { $sum: '$m_temp' }
+                : { $sum: { $cond: [{ $ne: ['$m_temp', null] }, 1, 0] } }
+
+      const bpmAgg =
+        agg === 'avg'
+          ? { $avg: '$m_bpm' }
+          : agg === 'min'
+            ? { $min: '$m_bpm' }
+            : agg === 'max'
+              ? { $max: '$m_bpm' }
+              : agg === 'sum'
+                ? { $sum: '$m_bpm' }
+                : { $sum: { $cond: [{ $ne: ['$m_bpm', null] }, 1, 0] } }
+
+      // --- Pipeline único para las 3 métricas ---
+      const pipeline: any[] = [
+        { $match: match },
+        addNumeric,
+        {
+          $group: {
+            _id: '$t',
+            mq7: mq7Agg,
+            temp: tempAgg,
+            bpm: bpmAgg,
+          },
+        },
+        { $project: { _id: 0, t: '$_id', mq7: 1, temp: 1, bpm: 1 } },
+        { $sort: { t: 1 } },
+      ]
+
+      const rows = await col.aggregate(pipeline, { allowDiskUse: true }).toArray()
+
+      // Separar en 3 arreglos de puntos [{t,y}]
+      const mq7Points = rows.map((r) => ({ t: r.t, y: r.mq7 }))
+      const tempPoints = rows.map((r) => ({ t: r.t, y: r.temp }))
+      const bpmPoints = rows.map((r) => ({ t: r.t, y: r.bpm }))
+
+      return response.json({
+        success: true,
+        message: 'Series temporales (mq7, temp, bpm)',
+        data: {
+          meta: {
+            agg,
+            bucket,
+            tz,
+            start,
+            end,
+            filters: { sensorId: qs.sensorId, cascoId: qs.cascoId, mineroId: qs.mineroId },
+          },
+          mq7: { unit: 'ppm', points: mq7Points },
+          temp: { unit: '°C', points: tempPoints },
+          bpm: { unit: 'bpm', points: bpmPoints },
+        },
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'SENSOR_TRI_SERIES')
+      return ErrorHandler.handleError(error, response, 'Error al generar tri-series', 400)
     }
   }
 }

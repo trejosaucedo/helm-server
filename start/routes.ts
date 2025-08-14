@@ -80,6 +80,9 @@ router
 // --- Sensores: lecturas (SensorReadingController) ---
 router
   .group(() => {
+    router
+      .get('/readings/tri-series', '#controllers/sensor_reading_controller.timeseriesThree')
+      .use(middleware.auth())
     router.post('/readings', '#controllers/sensor_reading_controller.ingestReading')
     router.post('/readings/batch', '#controllers/sensor_reading_controller.ingestBatchReadings')
     router
