@@ -56,6 +56,7 @@ export class CascoRepository {
     if (!casco) return null
 
     casco.mineroId = mineroId
+    casco.asignadoMinero = true
     await casco.save()
     return casco
   }
