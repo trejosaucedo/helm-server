@@ -121,7 +121,13 @@ export default class CascoController {
       const user = requireUser(ctx)
       if (!user) return
 
-      const cascos = await this.cascoService.getCascosBySupervisor(user.id)
+      // Si es admin, puede ver todos los cascos; si es supervisor, solo los suyos
+      let cascos
+      if (user.role === 'admin') {
+        cascos = await this.cascoService.getAllCascos()
+      } else {
+        cascos = await this.cascoService.getCascosBySupervisor(user.id)
+      }
       return jsonSuccess(ctx.response, 'Cascos obtenidos exitosamente', cascos)
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_INDEX')

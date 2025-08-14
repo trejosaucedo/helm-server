@@ -25,6 +25,7 @@ router
 // --- Cascos (helmets) ---
 router
   .group(() => {
+    router.get('/', '#controllers/casco_controller.index') // Lista todos los cascos (admin) o del supervisor
     router.post('/activate', '#controllers/casco_controller.activate')
     router.post('/deactivate', '#controllers/casco_controller.desactivate')
     router.get('/my-helmets', '#controllers/casco_controller.myHelmets')
