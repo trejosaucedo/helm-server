@@ -159,4 +159,16 @@ export class CascoService {
         : undefined,
     }
   }
+
+  async getCascoByMineroId(mineroId: string): Promise<CascoResponseDto | null> {
+    const casco = await this.cascoRepository.findByMineroId(mineroId)
+    if (!casco) {
+      return null
+    }
+    return this.mapCascoToResponse(casco)
+  }
+
+  async getCascoById(id: string): Promise<any> {
+    return await this.cascoRepository.findById(id)
+  }
 }
