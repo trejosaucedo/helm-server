@@ -208,12 +208,12 @@ export default class CascoController {
     ]
   }
 
-  async create({ request, response, user }: HttpContext) {
+  async create({ request, response }: HttpContext) {
     try {
       const payload = await request.validateUsing(createCascoValidator)
 
       // Si no se proporciona supervisorId, usar el usuario autenticado
-      const supervisorId = payload.supervisorId || user?.id
+      const supervisorId = payload.supervisorId || null
 
       const newCasco = await this.cascoService.createCascoAdmin({
         serial: payload.physicalId, // Usar physicalId como serial por defecto
