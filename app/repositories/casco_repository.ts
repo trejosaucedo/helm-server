@@ -1,5 +1,6 @@
 import Casco from '#models/casco'
 import { CreateCascoDto } from '#dtos/casco.dto'
+import { DateTime } from 'luxon'
 
 export class CascoRepository {
   /*
@@ -29,7 +30,7 @@ export class CascoRepository {
       .whereNull('minero_id')
   }
 
-  // Método actualizado: ya no crea casco, sino que vincula uno existente al supervisor
+  // Método actualizado: ya no crea casco, sino que vincula uno existente al supervisor o reactiva uno existente
   async activateCascoForSupervisor(
     supervisorId: string,
     physicalId: string
@@ -38,14 +39,18 @@ export class CascoRepository {
     const casco = await this.findByPhysicalId(physicalId)
     if (!casco) return null
 
-    // Verificar que el casco no esté ya vinculado a otro supervisor
-    if (casco.supervisorId) {
+    // Verificar que el casco no esté vinculado a otro supervisor diferente
+    if (casco.supervisorId && casco.supervisorId !== supervisorId) {
       throw new Error('Este casco ya está vinculado a otro supervisor')
     }
 
-    // Vincular el casco al supervisor y activarlo
+    // Vincular/reactivar el casco al supervisor
     casco.supervisorId = supervisorId
     casco.isActive = true
+    casco.asignadoSupervisor = true
+    if (!casco.fechaActivacion) {
+      casco.fechaActivacion = DateTime.now()
+    }
     await casco.save()
 
     return casco
@@ -79,11 +84,16 @@ export class CascoRepository {
     return casco
   }
 
-  // Método actualizado: verifica que el casco exista y no esté vinculado a ningún supervisor
-  async isPhysicalIdAvailableForActivation(physicalId: string): Promise<boolean> {
+  // Método actualizado: verifica que el casco exista y no esté vinculado a otro supervisor
+  async isPhysicalIdAvailableForActivation(physicalId: string, supervisorId?: string): Promise<boolean> {
     const casco = await this.findByPhysicalId(physicalId)
-    // El casco debe existir pero no estar vinculado a ningún supervisor
-    return casco !== null && casco.supervisorId === null
+    if (!casco) return false
+    
+    // Si no tiene supervisor asignado, está disponible
+    if (casco.supervisorId === null) return true
+    
+    // Si tiene supervisor asignado, solo está disponible si es el mismo supervisor que lo quiere activar
+    return supervisorId ? casco.supervisorId === supervisorId : false
   }
 
   // Método para verificar si un casco físico existe en el sistema

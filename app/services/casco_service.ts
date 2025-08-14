@@ -33,13 +33,13 @@ export class CascoService {
       throw new Error('El casco con este ID físico no existe en el sistema')
     }
 
-    // Verificar que el casco está disponible para ser activado (no vinculado a otro supervisor)
-    const isAvailable = await this.cascoRepository.isPhysicalIdAvailableForActivation(physicalId)
+    // Verificar disponibilidad del casco
+    const isAvailable = await this.cascoRepository.isPhysicalIdAvailableForActivation(physicalId, supervisorId)
     if (!isAvailable) {
       throw new Error('Este casco ya está vinculado a otro supervisor')
     }
 
-    // Activar/vincular el casco al supervisor
+    // Activar/reactivar el casco para el supervisor
     const casco = await this.cascoRepository.activateCascoForSupervisor(supervisorId, physicalId)
     if (!casco) {
       throw new Error('Error al activar el casco')
@@ -50,6 +50,11 @@ export class CascoService {
 
   async activateCasco(data: ActivateCascoDto): Promise<CascoResponseDto> {
     return this.activateCascoByPhysicalId(data.supervisorId, data.physicalId)
+  }
+
+  async findByPhysicalId(physicalId: string): Promise<CascoResponseDto | null> {
+    const casco = await this.cascoRepository.findByPhysicalId(physicalId)
+    return casco ? this.mapCascoToResponse(casco) : null
   }
 
   async getCascosBySupervisor(supervisorId: string): Promise<CascoResponseDto[]> {
