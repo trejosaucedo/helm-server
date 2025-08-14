@@ -33,21 +33,21 @@ router
     router.post('/unassign', '#controllers/casco_controller.unassign')
   })
   .prefix('/cascos')
-  .use(middleware.auth('supervisor'))
+  .use(middleware.auth(['admin', 'supervisor']))
 
 router
   .post('/cascos', '#controllers/casco_controller.create')
-  .use(middleware.auth('supervisor'))
+  .use(middleware.auth('admin'))
 router.delete('/cascos/clean', '#controllers/casco_controller.cleanCascos')
 router
   .get('/cascos/:id', '#controllers/casco_controller.getCasco')
-  .use(middleware.auth('supervisor'))
+  .use(middleware.auth(['admin', 'supervisor']))
 router
   .put('/cascos/:id', '#controllers/casco_controller.updateCasco')
-  .use(middleware.auth('supervisor'))
+  .use(middleware.auth(['admin', 'supervisor']))
 router
   .delete('/cascos/:id', '#controllers/casco_controller.deleteCasco')
-  .use(middleware.auth('supervisor'))
+  .use(middleware.auth(['admin', 'supervisor']))
 
 // --- Notificaciones ---
 router
