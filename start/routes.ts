@@ -33,21 +33,21 @@ router
     router.post('/unassign', '#controllers/casco_controller.unassign')
   })
   .prefix('/cascos')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('supervisor'))
 
 router
   .post('/cascos', '#controllers/casco_controller.create')
-  .use(middleware.auth('admin'))
+  .use(middleware.auth('supervisor'))
 router.delete('/cascos/clean', '#controllers/casco_controller.cleanCascos')
 router
   .get('/cascos/:id', '#controllers/casco_controller.getCasco')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('supervisor'))
 router
   .put('/cascos/:id', '#controllers/casco_controller.updateCasco')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('supervisor'))
 router
   .delete('/cascos/:id', '#controllers/casco_controller.deleteCasco')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('supervisor'))
 
 // --- Notificaciones ---
 router
@@ -122,29 +122,29 @@ router
     router.get('/:teamId/miners', '#controllers/team_controller.getTeamMiners')
     router
       .post('/', '#controllers/team_controller.create')
-      .use(middleware.auth(['admin', 'supervisor']))
+      .use(middleware.auth('supervisor'))
     router
       .post('/:teamId/assign-miner', '#controllers/team_controller.assignMinerToTeam')
-      .use(middleware.auth(['admin', 'supervisor']))
+      .use(middleware.auth('supervisor'))
     router
       .delete('/:teamId/miners/:mineroId', '#controllers/team_controller.removeMinerFromTeam')
-      .use(middleware.auth(['admin', 'supervisor']))
+      .use(middleware.auth('supervisor'))
     router
       .get('/supervisor', '#controllers/team_controller.getTeamsBySupervisor')
       .use(middleware.auth('supervisor'))
   })
   .prefix('/teams')
-  .use(middleware.auth())
+  .use(middleware.auth('supervisor'))
 
 router
   .get('/teams/:id', '#controllers/team_controller.getTeam')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('supervisor'))
 router
   .put('/teams/:id', '#controllers/team_controller.updateTeam')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('supervisor'))
 router
   .delete('/teams/:id', '#controllers/team_controller.deleteTeam')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('supervisor'))
 
 // --- Supervisores ---
 router
@@ -156,13 +156,13 @@ router
   .use(middleware.auth('admin'))
 
 // --- Mineros ---
-router.get('/mineros', '#controllers/auth_controller.listMiners').use(middleware.auth('admin'))
+router.get('/mineros', '#controllers/auth_controller.listMiners').use(middleware.auth('supervisor'))
 router
   .get('/mineros/stats', '#controllers/auth_controller.minersStats')
-  .use(middleware.auth('admin'))
+  .use(middleware.auth('supervisor'))
 router
   .get('/mineros/:id', '#controllers/auth_controller.getMinero')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('supervisor'))
 router
   .get('/access-codes', '#controllers/auth_controller.getAllAccessCodes')
   .use(middleware.auth('admin'))
@@ -174,13 +174,13 @@ router
   .use(middleware.auth('admin'))
 router
   .post('/mineros', '#controllers/auth_controller.registerMinero')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('supervisor'))
 router
   .put('/mineros/:id', '#controllers/auth_controller.updateMinero')
-  .use(middleware.auth(['admin', 'supervisor']))
+  .use(middleware.auth('supervisor'))
 router
   .delete('/mineros/:id', '#controllers/auth_controller.deleteMinero')
-  .use(middleware.auth('admin'))
+  .use(middleware.auth('supervisor'))
 
 // --- Mineros para Supervisores ---
 router
