@@ -193,4 +193,94 @@ export default class SensorReadingController {
       return ErrorHandler.handleError(error, response, 'Error al procesar datos del sensor', 400)
     }
   }
+
+  // POST /cascos/:cascoId/sensores/batch
+  // Recibe múltiples lecturas del dispositivo Raspberry Pi (IoT) en una sola petición
+  async publishBatchSensorData({ params, request, response }: HttpContext) {
+    try {
+      const { cascoId } = params
+      const deviceToken = request.header('x-device-token')
+      const batchData = request.body()
+
+      if (!deviceToken) {
+        return response.status(401).json({
+          success: false,
+          message: 'Token de dispositivo requerido',
+        })
+      }
+
+      if (!Array.isArray(batchData) || batchData.length === 0) {
+        return response.status(400).json({
+          success: false,
+          message: 'Se requiere un arreglo de lecturas no vacío',
+        })
+      }
+
+      // Validar que el casco existe
+      const sensorService = new SensorService()
+      const cascoExists = await sensorService.validateCascoExists(cascoId)
+      if (!cascoExists) {
+        return response.status(404).json({
+          success: false,
+          message: `Casco ${cascoId} no encontrado`,
+        })
+      }
+
+      const results = []
+      const errors = []
+
+      // Procesar cada lectura en el batch
+      for (let i = 0; i < batchData.length; i++) {
+        const sensorData = batchData[i]
+        
+        try {
+          // Validar que el sensor existe en ese casco específico
+          const sensorValidation = await sensorService.validateSensorInCasco(sensorData.sensorId, cascoId)
+          if (!sensorValidation.isValid) {
+            errors.push({
+              index: i,
+              sensorId: sensorData.sensorId,
+              error: sensorValidation.message
+            })
+            continue
+          }
+
+          // Procesar datos del sensor
+          await this.readingService.publishSensorData({
+            cascoId,
+            sensorId: sensorData.sensorId,
+            data: sensorData,
+            deviceToken,
+          })
+
+          results.push({
+            index: i,
+            sensorId: sensorData.sensorId,
+            status: 'success'
+          })
+
+        } catch (error) {
+          errors.push({
+            index: i,
+            sensorId: sensorData.sensorId,
+            error: error.message
+          })
+        }
+      }
+
+      return response.status(201).json({
+        success: true,
+        message: `Batch procesado: ${results.length} exitosas, ${errors.length} errores`,
+        data: {
+          processed: results.length,
+          errors: errors.length,
+          results: results,
+          errorDetails: errors
+        }
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'SENSOR_PUBLISH_BATCH_DATA')
+      return ErrorHandler.handleError(error, response, 'Error al procesar batch de sensores', 400)
+    }
+  }
 }
