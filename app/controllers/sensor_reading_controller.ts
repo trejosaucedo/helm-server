@@ -288,84 +288,67 @@ export default class SensorReadingController {
   }
   public async timeseriesThree({ request, response }: HttpContext) {
     try {
-      const COLLECTION = env.get('MONGO_COLLECTION', 'mediciones')
+      // Colección por defecto: sensor_readings
+      const COLLECTION = env.get('MONGO_COLLECTION', 'sensor_readings')
       const col = mongoose.connection.db.collection(COLLECTION)
 
-      // --- Parámetros ---
       const qs = request.qs()
       const bucket = (qs.bucket || 'hour') as 'minute' | 'hour' | 'day'
       const agg = (qs.agg || 'avg') as 'avg' | 'min' | 'max' | 'sum' | 'count'
       const tz = (qs.tz || 'America/Monterrey') as string
 
-      const end = qs.end ? new Date(qs.end) : new Date()
-      const start = qs.start ? new Date(qs.start) : new Date(end.getTime() - 24 * 60 * 60 * 1000)
+      // Filtros requeridos/opcionales
+      const cascoId = String(qs.cascoId || '')
+      if (!cascoId) {
+        return response.badRequest({ success: false, message: 'cascoId requerido' })
+      }
 
-      // --- Filtros ---
-      const match: any = { timestamp: { $gte: start, $lte: end } }
-      if (qs.sensorId) match.sensorId = qs.sensorId
-      if (qs.cascoId) match.cascoId = qs.cascoId
-      if (qs.mineroId) match.mineroId = qs.mineroId
+      const baseMatch: any = { cascoId }
+      if (qs.sensorId) baseMatch.sensorId = qs.sensorId
+      if (qs.mineroId) baseMatch.mineroId = qs.mineroId
 
-      // --- Normalización numérica segura (evita errores por tipos) ---
+      // Rango: usa start/end si vienen; si no, últimas 24h con $$NOW
+      const timeMatch =
+        qs.start && qs.end
+          ? { timestamp: { $gte: new Date(qs.start), $lte: new Date(qs.end) } }
+          : {
+            $expr: {
+              $and: [
+                { $gte: ['$timestamp', { $dateSubtract: { startDate: '$$NOW', unit: 'hour', amount: 24 } }] },
+                { $lte: ['$timestamp', '$$NOW'] },
+              ],
+            },
+          }
+
+      const match: any = { ...baseMatch, ...timeMatch }
+
+      // Normalización numérica
       const addNumeric = {
         $addFields: {
           t: { $dateTrunc: { date: '$timestamp', unit: bucket, timezone: tz } },
-          m_mq7: {
-            $cond: [{ $isNumber: '$metadata.mq7' }, { $toDouble: '$metadata.mq7' }, null],
-          },
-          m_temp: {
-            $cond: [{ $isNumber: '$metadata.tempC' }, { $toDouble: '$metadata.tempC' }, null],
-          },
-          m_bpm: {
-            $cond: [{ $isNumber: '$metadata.bpm' }, { $toDouble: '$metadata.bpm' }, null],
-          },
+          m_mq7:  { $convert: { input: '$metadata.mq7',  to: 'double', onError: null, onNull: null } },
+          m_temp: { $convert: { input: '$metadata.tempC', to: 'double', onError: null, onNull: null } },
+          m_bpm:  { $convert: { input: '$metadata.bpm',  to: 'double', onError: null, onNull: null } },
         },
       }
 
-      // --- Operaciones de agregación por campo ---
-      const mq7Agg =
-        agg === 'avg'
-          ? { $avg: '$m_mq7' }
-          : agg === 'min'
-            ? { $min: '$m_mq7' }
-            : agg === 'max'
-              ? { $max: '$m_mq7' }
-              : agg === 'sum'
-                ? { $sum: '$m_mq7' }
-                : { $sum: { $cond: [{ $ne: ['$m_mq7', null] }, 1, 0] } } // count no-nulos
+      // Helper para operación de agregación
+      const mkAgg = (field: string) =>
+        agg === 'avg' ? { $avg: field } :
+          agg === 'min' ? { $min: field } :
+            agg === 'max' ? { $max: field } :
+              agg === 'sum' ? { $sum: field } :
+                { $sum: { $cond: [{ $ne: [field, null] }, 1, 0] } } // count no nulos
 
-      const tempAgg =
-        agg === 'avg'
-          ? { $avg: '$m_temp' }
-          : agg === 'min'
-            ? { $min: '$m_temp' }
-            : agg === 'max'
-              ? { $max: '$m_temp' }
-              : agg === 'sum'
-                ? { $sum: '$m_temp' }
-                : { $sum: { $cond: [{ $ne: ['$m_temp', null] }, 1, 0] } }
-
-      const bpmAgg =
-        agg === 'avg'
-          ? { $avg: '$m_bpm' }
-          : agg === 'min'
-            ? { $min: '$m_bpm' }
-            : agg === 'max'
-              ? { $max: '$m_bpm' }
-              : agg === 'sum'
-                ? { $sum: '$m_bpm' }
-                : { $sum: { $cond: [{ $ne: ['$m_bpm', null] }, 1, 0] } }
-
-      // --- Pipeline único para las 3 métricas ---
       const pipeline: any[] = [
         { $match: match },
         addNumeric,
         {
           $group: {
             _id: '$t',
-            mq7: mq7Agg,
-            temp: tempAgg,
-            bpm: bpmAgg,
+            mq7:  mkAgg('$m_mq7'),
+            temp: mkAgg('$m_temp'),
+            bpm:  mkAgg('$m_bpm'),
           },
         },
         { $project: { _id: 0, t: '$_id', mq7: 1, temp: 1, bpm: 1 } },
@@ -374,26 +357,25 @@ export default class SensorReadingController {
 
       const rows = await col.aggregate(pipeline, { allowDiskUse: true }).toArray()
 
-      // Separar en 3 arreglos de puntos [{t,y}]
-      const mq7Points = rows.map((r) => ({ t: r.t, y: r.mq7 }))
-      const tempPoints = rows.map((r) => ({ t: r.t, y: r.temp }))
-      const bpmPoints = rows.map((r) => ({ t: r.t, y: r.bpm }))
+      // 3 series separadas
+      const mq7Points  = rows.filter(r => r.mq7  !== null && r.mq7  !== undefined).map(r => ({ t: r.t, y: r.mq7  }))
+      const tempPoints = rows.filter(r => r.temp !== null && r.temp !== undefined).map(r => ({ t: r.t, y: r.temp }))
+      const bpmPoints  = rows.filter(r => r.bpm  !== null && r.bpm  !== undefined).map(r => ({ t: r.t, y: r.bpm  }))
 
-      return response.json({
+      return response.ok({
         success: true,
         message: 'Series temporales (mq7, temp, bpm)',
         data: {
           meta: {
-            agg,
-            bucket,
-            tz,
-            start,
-            end,
-            filters: { sensorId: qs.sensorId, cascoId: qs.cascoId, mineroId: qs.mineroId },
+            agg, bucket, tz,
+            // si no mandaste start/end, el rango efectivo fue últimas 24h
+            start: qs.start ? new Date(qs.start) : null,
+            end:   qs.end   ? new Date(qs.end)   : null,
+            filters: { cascoId, sensorId: qs.sensorId ?? null, mineroId: qs.mineroId ?? null },
           },
-          mq7: { unit: 'ppm', points: mq7Points },
-          temp: { unit: '°C', points: tempPoints },
-          bpm: { unit: 'bpm', points: bpmPoints },
+          mq7:  { unit: 'ppm', points: mq7Points },
+          temp: { unit: '°C',  points: tempPoints },
+          bpm:  { unit: 'bpm', points: bpmPoints },
         },
       })
     } catch (error) {
@@ -401,4 +383,5 @@ export default class SensorReadingController {
       return ErrorHandler.handleError(error, response, 'Error al generar tri-series', 400)
     }
   }
+
 }
