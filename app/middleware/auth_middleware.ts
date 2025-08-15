@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
+import jwt from 'jsonwebtoken'
 import { TokenUtils } from '#utils/token_utils'
 import { SessionService } from '#services/session_service'
 import { toUserResponseDto } from '#mappers/user.mapper'
@@ -18,6 +19,27 @@ export default class AuthMiddleware {
         if (newAccessToken) {
           TokenUtils.setAccessTokenCookie(ctx.response, newAccessToken)
           validation = await SessionService.validateAccessToken(newAccessToken)
+        }
+      }
+
+      // 2.b Intentar refresh usando el Authorization Bearer expirado (decodificar sin verificar)
+      if (!validation) {
+        const authHeader = ctx.request.header('Authorization')
+        const bearer = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
+        if (bearer) {
+          try {
+            const decoded: any = jwt.decode(bearer)
+            const sid = decoded?.sessionId
+            if (sid && (await SessionService.sessionExists(sid))) {
+              const newAccessToken = await SessionService.refreshAccessToken(sid)
+              if (newAccessToken) {
+                TokenUtils.setAccessTokenCookie(ctx.response, newAccessToken)
+                validation = await SessionService.validateAccessToken(newAccessToken)
+              }
+            }
+          } catch {
+            // ignorar
+          }
         }
       }
     }

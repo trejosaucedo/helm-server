@@ -2,19 +2,11 @@ import type { HttpContext } from '@adonisjs/core/http'
 
 export class TokenUtils {
   private static getBaseCookieOptions() {
-    const isProd = process.env.NODE_ENV === 'production'
-    const sameSite = (isProd ? 'none' : 'lax') as 'none' | 'lax' | 'strict'
-    const secure = isProd ? true : false
-    const base: any = {
+    return {
       httpOnly: true,
-      secure,
-      sameSite,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict' as const,
     }
-    const domain = process.env.COOKIE_DOMAIN
-    if (domain && typeof domain === 'string' && domain.trim().length > 0) {
-      base.domain = domain.trim()
-    }
-    return base
   }
 
   static setSessionCookie(response: HttpContext['response'], sessionId: string) {
@@ -124,13 +116,12 @@ export class TokenUtils {
   }
 
   static extractFromContext(ctx: HttpContext): string | undefined {
-    // Priorizar header Authorization (Bearer) sobre cookie para evitar usar tokens viejos
+    const token = ctx.request.cookie('accessToken')
+    if (token) return token
     const authHeader = ctx.request.header('Authorization')
     if (authHeader?.startsWith('Bearer ')) {
       return authHeader.slice(7)
     }
-    const token = ctx.request.cookie('accessToken')
-    if (token) return token
     return undefined
   }
 }
