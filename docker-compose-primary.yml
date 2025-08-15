@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  mongo-primary:
+    image: mongo:7.0
+    container_name: mongo-primary
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    command: mongod --replSet rs0 --port 27017 --bind_ip_all
+    volumes:
+      - mongo_primary_data:/data/db
+    networks:
+      - mongo-network
+
+volumes:
+  mongo_primary_data:
+
+networks:
+  mongo-network:
+    driver: bridge
