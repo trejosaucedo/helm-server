@@ -2,11 +2,19 @@ import type { HttpContext } from '@adonisjs/core/http'
 
 export class TokenUtils {
   private static getBaseCookieOptions() {
-    return {
+    const isProd = process.env.NODE_ENV === 'production'
+    const sameSite = (isProd ? 'none' : 'lax') as 'none' | 'lax' | 'strict'
+    const secure = isProd ? true : false
+    const base: any = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict' as const,
+      secure,
+      sameSite,
     }
+    const domain = process.env.COOKIE_DOMAIN
+    if (domain && typeof domain === 'string' && domain.trim().length > 0) {
+      base.domain = domain.trim()
+    }
+    return base
   }
 
   static setSessionCookie(response: HttpContext['response'], sessionId: string) {
