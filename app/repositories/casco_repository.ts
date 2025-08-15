@@ -126,13 +126,17 @@ export class CascoRepository {
   }
 
   async getAllCascos() {
-    return await Casco.all()
+    return await Casco.query()
+      .preload('minero')
+      .preload('sensores')
+      .orderBy('created_at', 'desc')
   }
 
   async getCascosBySupervisor(supervisorId: string): Promise<Casco[]> {
     return await Casco.query()
       .where('supervisor_id', supervisorId)
       .preload('minero')
+      .preload('sensores')
       .orderBy('created_at', 'desc')
   }
 }

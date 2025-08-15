@@ -44,4 +44,18 @@ export interface CascoResponseDto {
     fullName: string | null
     email: string
   }
+  sensors?: {
+    id: string
+    cascoId: string
+    type: string
+    name: string
+    isActive: boolean
+    minValue: number | null
+    maxValue: number | null
+    unit: string
+    sampleRate: number
+    alertThreshold: number | null
+    createdAt: string
+    updatedAt: string
+  }[]
 }

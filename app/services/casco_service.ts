@@ -58,7 +58,7 @@ export class CascoService {
   }
 
   async getCascosBySupervisor(supervisorId: string): Promise<CascoResponseDto[]> {
-    const cascos = await this.cascoRepository.findBySupervisorId(supervisorId)
+    const cascos = await this.cascoRepository.getCascosBySupervisor(supervisorId)
     return cascos.map((casco) => this.mapCascoToResponse(casco))
   }
 
@@ -67,8 +67,9 @@ export class CascoService {
     return cascos.map((casco) => this.mapCascoToResponse(casco))
   }
 
-  async getAllCascos() {
-    return await this.cascoRepository.getAllCascos()
+  async getAllCascos(): Promise<CascoResponseDto[]> {
+    const cascos = await this.cascoRepository.getAllCascos()
+    return cascos.map((casco) => this.mapCascoToResponse(casco))
   }
 
   async assignCasco(data: AssignCascoDto): Promise<void> {
@@ -157,6 +158,20 @@ export class CascoService {
             email: casco.minero.email,
           }
         : undefined,
+      sensors: casco.sensores ? casco.sensores.map((sensor: any) => ({
+        id: sensor.id,
+        cascoId: sensor.cascoId,
+        type: sensor.type,
+        name: sensor.name,
+        isActive: sensor.isActive,
+        minValue: sensor.minValue,
+        maxValue: sensor.maxValue,
+        unit: sensor.unit,
+        sampleRate: sensor.sampleRate,
+        alertThreshold: sensor.alertThreshold,
+        createdAt: sensor.createdAt.toISO(),
+        updatedAt: sensor.updatedAt.toISO(),
+      })) : [],
     }
   }
 
