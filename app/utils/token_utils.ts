@@ -124,12 +124,13 @@ export class TokenUtils {
   }
 
   static extractFromContext(ctx: HttpContext): string | undefined {
-    const token = ctx.request.cookie('accessToken')
-    if (token) return token
+    // Priorizar header Authorization (Bearer) sobre cookie para evitar usar tokens viejos
     const authHeader = ctx.request.header('Authorization')
     if (authHeader?.startsWith('Bearer ')) {
       return authHeader.slice(7)
     }
+    const token = ctx.request.cookie('accessToken')
+    if (token) return token
     return undefined
   }
 }
