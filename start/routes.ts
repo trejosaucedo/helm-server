@@ -194,6 +194,11 @@ router
   .get('/supervisor/mineros/stats', '#controllers/auth_controller.minersStatsBySupervisor')
   .use(middleware.auth('supervisor'))
 
+// --- Rutas específicas para Mineros ---
+router
+  .get('/minero/my-helmet', '#controllers/casco_controller.getMyHelmet')
+  .use(middleware.auth('minero'))
+
 // --- Health check ---
 router.get('/health', ({ response }) => {
   return response.json({

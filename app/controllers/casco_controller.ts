@@ -264,7 +264,7 @@ export default class CascoController {
   async getCasco({ params, response }: HttpContext) {
     try {
       const id = params.id
-      const casco = await this.cascoService.cascoRepository.findById(id)
+      const casco = await this.cascoService.getCascoById(id)
       if (!casco) {
         return response
           .status(404)
@@ -287,7 +287,7 @@ export default class CascoController {
     try {
       const id = params.id
       const payload = await request.validateUsing(updateCascoValidator)
-      const casco = await this.cascoService.cascoRepository.findById(id)
+      const casco = await this.cascoService.getCascoById(id)
       if (!casco) {
         return response
           .status(404)
@@ -311,7 +311,7 @@ export default class CascoController {
   async deleteCasco({ params, response }: HttpContext) {
     try {
       const id = params.id
-      const casco = await this.cascoService.cascoRepository.findById(id)
+      const casco = await this.cascoService.getCascoById(id)
       if (!casco) {
         return response
           .status(404)
@@ -341,6 +341,45 @@ export default class CascoController {
     } catch (error) {
       ErrorHandler.logError(error, 'CASCO_CLEAN')
       return ErrorHandler.handleError(error, response, 'Error al limpiar cascos', 400)
+    }
+  }
+
+  // GET /minero/my-helmet
+  async getMyHelmet(ctx: HttpContext) {
+    try {
+      const user = ctx.user
+      if (!user) {
+        return ctx.response
+          .status(401)
+          .json({ success: false, message: 'No autenticado', data: null })
+      }
+
+      // Verificar que el usuario sea un minero
+      if (user.role !== 'minero') {
+        return ctx.response
+          .status(403)
+          .json({ success: false, message: 'Solo los mineros pueden acceder a esta información', data: null })
+      }
+
+      // Buscar el casco asignado al minero
+      const casco = await this.cascoService.getCascoByMineroId(user.id)
+      
+      if (!casco) {
+        return ctx.response.json({
+          success: true,
+          message: 'No tienes un casco asignado',
+          data: null
+        })
+      }
+
+      return ctx.response.json({
+        success: true,
+        message: 'Casco obtenido exitosamente',
+        data: casco
+      })
+    } catch (error) {
+      ErrorHandler.logError(error, 'CASCO_GET_MY_HELMET')
+      return ErrorHandler.handleError(error, ctx.response, 'Error al obtener tu casco', 400)
     }
   }
 }

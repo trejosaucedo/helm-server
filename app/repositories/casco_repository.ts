@@ -16,6 +16,15 @@ export class CascoRepository {
     return await Casco.findBy('physical_id', physicalId)
   }
 
+  async findByMineroId(mineroId: string): Promise<Casco | null> {
+    return await Casco.query()
+      .where('minero_id', mineroId)
+      .where('is_active', true)
+      .preload('minero')
+      .preload('sensores')
+      .first()
+  }
+
   async findBySupervisorId(supervisorId: string): Promise<Casco[]> {
     return Casco.query()
       .where('supervisor_id', supervisorId)
